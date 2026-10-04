@@ -1,0 +1,124 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Geek Collection</string>
+
+    <!-- Navigation / general -->
+    <string name="action_back">Voltar</string>
+    <string name="action_save">Salvar</string>
+    <string name="action_cancel">Cancelar</string>
+    <string name="action_delete">Excluir</string>
+    <string name="action_edit">Editar</string>
+    <string name="action_add">Adicionar</string>
+    <string name="action_search">Pesquisar</string>
+    <string name="action_clear">Limpar</string>
+    <string name="action_retry">Tentar novamente</string>
+    <string name="action_settings">Configurações</string>
+    <string name="action_use">Usar</string>
+    <string name="action_skip">Preencher manualmente</string>
+    <string name="action_close">Fechar</string>
+    <string name="action_favorite">Favoritar</string>
+    <string name="action_unfavorite">Remover dos favoritos</string>
+
+    <!-- Library -->
+    <string name="library_title">Minha biblioteca</string>
+    <string name="library_search_hint">Buscar por título, plataforma ou autor</string>
+    <string name="library_empty_title">Sua biblioteca está vazia</string>
+    <string name="library_empty_body">Adicione jogos, livros, consoles e colecionáveis manualmente ou escaneando uma foto do item.</string>
+    <string name="library_no_results">Nenhum item encontrado para esta busca.</string>
+    <string name="library_filter_all">Todos</string>
+    <string name="library_filter_favorites">Favoritos</string>
+    <string name="library_add_manually">Cadastrar manualmente</string>
+    <string name="library_add_by_photo">Adicionar por foto</string>
+    <string name="library_stats">%1$d itens · %2$d concluídos</string>
+    <string name="library_sort_recent">Recentes</string>
+    <string name="library_sort_title">Título</string>
+    <string name="library_sort_completion">Conclusão</string>
+
+    <!-- Categories -->
+    <string name="category_board_game">Jogo de tabuleiro</string>
+    <string name="category_video_game">Game</string>
+    <string name="category_console">Console</string>
+    <string name="category_accessory">Acessório</string>
+    <string name="category_book">Livro</string>
+    <string name="category_comic">HQ / Mangá</string>
+    <string name="category_action_figure">Action figure</string>
+    <string name="category_collectible">Colecionável</string>
+    <string name="category_other">Outro</string>
+
+    <!-- Fields -->
+    <string name="field_title">Título</string>
+    <string name="field_title_required">Informe um título</string>
+    <string name="field_category">Categoria</string>
+    <string name="field_platform">Plataforma</string>
+    <string name="field_platform_custom">Outra plataforma…</string>
+    <string name="field_platform_custom_hint">Digite o nome da plataforma</string>
+    <string name="field_completion">Percentual de conclusão</string>
+    <string name="field_completion_value">%1$d%% concluído</string>
+    <string name="field_description">Descrição</string>
+    <string name="field_creator_author">Autor</string>
+    <string name="field_creator_developer">Desenvolvedora</string>
+    <string name="field_creator_designer">Designer</string>
+    <string name="field_creator_brand">Marca / fabricante</string>
+    <string name="field_publisher">Editora / distribuidora</string>
+    <string name="field_release_year">Ano de lançamento</string>
+    <string name="field_barcode">Código de barras</string>
+    <string name="field_notes">Observações</string>
+    <string name="field_cover">Capa</string>
+    <string name="field_added_on">Adicionado em %1$s</string>
+    <string name="field_source">Dados obtidos de %1$s</string>
+
+    <!-- Edit -->
+    <string name="edit_title_new">Novo item</string>
+    <string name="edit_title_edit">Editar item</string>
+    <string name="edit_search_online">Buscar dados na internet</string>
+    <string name="edit_search_online_hint">Preenche descrição, capa, ano e autor a partir do título</string>
+    <string name="edit_take_photo">Tirar foto</string>
+    <string name="edit_pick_photo">Escolher da galeria</string>
+    <string name="edit_remove_photo">Remover foto</string>
+    <string name="edit_saved">Item salvo</string>
+    <string name="edit_delete_confirm_title">Excluir item?</string>
+    <string name="edit_delete_confirm_body">\"%1$s\" será removido da sua biblioteca. Esta ação não pode ser desfeita.</string>
+
+    <!-- Scan -->
+    <string name="scan_title">Adicionar por foto</string>
+    <string name="scan_intro_title">Reconhecimento de imagem</string>
+    <string name="scan_intro_body">Fotografe a capa, a caixa ou o código de barras do item. O app identifica textos, códigos e o tipo do objeto no próprio aparelho e depois busca os dados na internet.</string>
+    <string name="scan_category_hint">Dica de categoria (opcional)</string>
+    <string name="scan_category_auto">Detectar automaticamente</string>
+    <string name="scan_take_photo">Tirar foto</string>
+    <string name="scan_pick_photo">Usar foto da galeria</string>
+    <string name="scan_recognizing">Analisando a imagem…</string>
+    <string name="scan_searching">Buscando dados na internet…</string>
+    <string name="scan_results_title">Resultados encontrados</string>
+    <string name="scan_recognized_title">O que foi reconhecido</string>
+    <string name="scan_recognized_barcode">Código de barras: %1$s</string>
+    <string name="scan_recognized_text">Texto: %1$s</string>
+    <string name="scan_recognized_platform">Plataforma: %1$s</string>
+    <string name="scan_recognized_category">Categoria sugerida: %1$s</string>
+    <string name="scan_recognized_labels">Rótulos: %1$s</string>
+    <string name="scan_no_results">Nenhum resultado online. Você pode preencher o cadastro manualmente com o que foi reconhecido.</string>
+    <string name="scan_nothing_recognized">Não foi possível reconhecer nada na imagem. Tente uma foto mais nítida da capa ou do código de barras.</string>
+    <string name="scan_error">Falha ao analisar a imagem: %1$s</string>
+    <string name="scan_provider_errors">Algumas fontes falharam: %1$s</string>
+    <string name="scan_rawg_hint">Para melhores resultados com games, configure uma chave gratuita da RAWG nas configurações.</string>
+    <string name="scan_camera_unavailable">Nenhum app de câmera encontrado.</string>
+
+    <!-- Settings -->
+    <string name="settings_title">Configurações</string>
+    <string name="settings_rawg_title">Chave da API RAWG (games)</string>
+    <string name="settings_rawg_body">A RAWG é um banco de dados de video games. A chave é gratuita e pode ser criada em rawg.io/apidocs. Sem ela, os games são buscados na Wikipédia.</string>
+    <string name="settings_rawg_hint">Cole sua chave aqui</string>
+    <string name="settings_wikipedia_title">Idioma da Wikipédia</string>
+    <string name="settings_wikipedia_body">Usado nas buscas genéricas (consoles, acessórios, action figures e colecionáveis).</string>
+    <string name="settings_sources_title">Fontes de dados</string>
+    <string name="settings_sources_body">Livros: Open Library · Jogos de tabuleiro: BoardGameGeek · Games: RAWG ou Wikipédia · Códigos de barras: UPCitemdb e Open Library · Outros: Wikipédia</string>
+    <string name="settings_about_title">Sobre</string>
+    <string name="settings_about_body">Geek Collection v%1$s. O reconhecimento de imagem roda no aparelho com ML Kit (código de barras, texto e rótulos). Nenhuma foto é enviada para a internet, apenas o texto reconhecido.</string>
+    <string name="settings_saved">Configurações salvas</string>
+
+    <!-- Detail -->
+    <string name="detail_not_found">Item não encontrado</string>
+    <string name="detail_completion_title">Progresso</string>
+    <string name="detail_completed">Concluído</string>
+    <string name="detail_mark_completed">Marcar como concluído</string>
+</resources>
