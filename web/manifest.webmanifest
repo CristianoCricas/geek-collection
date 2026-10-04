@@ -1,0 +1,36 @@
+{
+  "name": "Geek Collection",
+  "short_name": "Geek Collection",
+  "description": "Sua biblioteca geek: jogos de tabuleiro, games, consoles, livros, HQs, action figures e colecionáveis, com cadastro por foto e pesquisa no Google.",
+  "id": "./",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#1b1340",
+  "theme_color": "#1b1340",
+  "lang": "pt-BR",
+  "dir": "ltr",
+  "categories": ["entertainment", "utilities"],
+  "icons": [
+    { "src": "icons/icon-192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "icons/icon-512.png", "sizes": "512x512", "type": "image/png" },
+    { "src": "icons/icon-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" },
+    { "src": "icons/icon.svg", "sizes": "any", "type": "image/svg+xml" }
+  ],
+  "shortcuts": [
+    { "name": "Adicionar por foto", "short_name": "Foto", "url": "./#/scan", "icons": [{ "src": "icons/icon-192.png", "sizes": "192x192" }] },
+    { "name": "Cadastrar manualmente", "short_name": "Novo", "url": "./#/edit", "icons": [{ "src": "icons/icon-192.png", "sizes": "192x192" }] }
+  ],
+  "share_target": {
+    "action": "./share-target",
+    "method": "POST",
+    "enctype": "multipart/form-data",
+    "params": {
+      "title": "title",
+      "text": "text",
+      "url": "url",
+      "files": [{ "name": "image", "accept": ["image/*"] }]
+    }
+  }
+}

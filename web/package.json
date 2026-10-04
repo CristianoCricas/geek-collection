@@ -1,0 +1,11 @@
+{
+  "name": "geek-collection-pwa",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Geek Collection PWA: biblioteca geek com reconhecimento de imagem e pesquisa no Google",
+  "type": "module",
+  "scripts": {
+    "test": "node --test test/*.test.js",
+    "serve": "npx --yes http-server . -p 8080 -c-1"
+  }
+}
