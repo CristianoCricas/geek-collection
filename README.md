@@ -14,6 +14,11 @@ Sem etapa de build: HTML, CSS e JavaScript puros (ES modules), publicados no Git
 pelo workflow `.github/workflows/pages.yml`. Funciona no Chrome/Edge/Safari do celular e
 pode ser instalada como app.
 
+> **Ativação única do GitHub Pages:** em *Settings → Pages → Build and deployment*, escolha
+> *Source: GitHub Actions*. Depois rode o workflow *Deploy PWA to GitHub Pages* (aba Actions →
+> *Run workflow*) ou faça qualquer push em `web/`. O token padrão do Actions não consegue
+> criar o site sozinho, por isso o primeiro deploy falha até essa opção ser marcada.
+
 - **Pesquisa no Google** como fonte principal de dados. O Google não oferece busca sem chave
   para aplicativos, então o app usa a [API Pesquisa Personalizada / Programmable Search
   Engine](https://developers.google.com/custom-search/v1/overview) (gratuita até 100
