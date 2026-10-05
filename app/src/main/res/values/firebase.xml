@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Default Firebase project for cloud sync. Fill with YOUR project's values
+  (Firebase console → Project settings → General) so users only need to sign in.
+  The web API key is public by design; access is restricted by the Firestore rules.
+  Values typed in the app's Settings override these.
+-->
+<resources>
+    <string name="firebase_project_id" translatable="false"></string>
+    <string name="firebase_api_key" translatable="false"></string>
+</resources>

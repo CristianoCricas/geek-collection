@@ -31,6 +31,14 @@ Instruções para quem trabalha neste repositório (incluindo o Claude Code).
 - O módulo `app/` (Android) só compila no GitHub Actions; antes de empurrar, pedir uma
   revisão de compilação do diff e corrigir o que for apontado.
 
+## Firebase (sync e login)
+
+- Os valores padrão do projeto ficam em `web/js/config.js` e
+  `app/src/main/res/values/firebase.xml` (vazios no repositório; a chave de API web é pública
+  por desenho, a segurança vem das regras do Firestore). Não colocar chaves privadas.
+- A tela de login (`web/js/ui/login.js`, `ui/login/LoginScreen.kt`) é a única porta de
+  entrada da conta; Configurações só mostra status, "Sair" e o projeto.
+
 ## Idioma
 
 Interface, README e mensagens ao usuário em português do Brasil; identificadores de código

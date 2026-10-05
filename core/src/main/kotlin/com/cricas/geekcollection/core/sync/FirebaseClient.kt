@@ -75,6 +75,17 @@ class FirebaseClient(
         return session
     }
 
+    /** Sends Firebase's password reset e-mail. */
+    suspend fun sendPasswordReset(email: String) {
+        val cfg = config
+        if (!cfg.isConfigured) throw SyncAuthException("Configure o projeto Firebase primeiro")
+        try {
+            http.post("$AUTH:sendOobCode?key=${enc(cfg.apiKey)}", """{"requestType":"PASSWORD_RESET","email":${quote(email)}}""")
+        } catch (e: HttpException) {
+            throw SyncAuthException(authErrorMessage(e.message))
+        }
+    }
+
     /** Returns a valid ID token, refreshing it when expired. */
     suspend fun ensureToken(): String {
         val a = auth ?: throw SyncAuthException("Faça login para sincronizar")

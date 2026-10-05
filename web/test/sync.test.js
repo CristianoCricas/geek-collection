@@ -148,3 +148,13 @@ test('engine requires a session', async () => {
   const { client } = fakeFirebase();
   await assert.rejects(() => runSync({ firebase: client, store: memoryStore() }), /Faça login/);
 });
+
+test('password reset calls sendOobCode and translates errors', async () => {
+  const calls = [];
+  const http = { post: async (url, body) => { calls.push({ url, body }); if (body.email === 'nobody@x.y') { const e = new Error('EMAIL_NOT_FOUND'); e.status = 400; throw e; } return {}; } };
+  const client = new FirebaseClient(() => ({ firebaseProjectId: 'p', firebaseApiKey: 'k' }), { load: async () => null, save: async () => {} }, http);
+  await client.sendPasswordReset('a@b.c');
+  assert.match(calls[0].url, /accounts:sendOobCode\?key=k/);
+  assert.deepEqual(calls[0].body, { requestType: 'PASSWORD_RESET', email: 'a@b.c' });
+  await assert.rejects(() => client.sendPasswordReset('nobody@x.y'), /E-mail não encontrado/);
+});

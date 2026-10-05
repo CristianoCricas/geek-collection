@@ -148,6 +148,17 @@ export class FirebaseClient {
     return this.auth;
   }
 
+  /** Sends Firebase's password reset e-mail. */
+  async sendPasswordReset(email) {
+    const { apiKey } = this.config;
+    if (!apiKey) throw new Error('Configure o projeto Firebase primeiro');
+    try {
+      await this.post(`${AUTH}:sendOobCode?key=${encodeURIComponent(apiKey)}`, { requestType: 'PASSWORD_RESET', email });
+    } catch (e) {
+      throw new Error(authErrorMessage(e.message));
+    }
+  }
+
   /** Returns a valid ID token, refreshing it when needed. */
   async ensureToken() {
     const a = await this.loadAuth();

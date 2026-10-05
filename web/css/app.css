@@ -212,3 +212,11 @@ ol.steps li { margin-bottom: 6px; }
   font-size: 0.65rem; font-weight: 600; color: var(--primary);
   background: var(--primary-soft); border-radius: 999px; padding: 2px 8px;
 }
+
+/* Login screen */
+.login-main { padding-top: calc(24px + var(--safe-top)); max-width: 440px; }
+.login-hero { text-align: center; margin-bottom: 16px; }
+.login-hero img { margin: 0 auto 8px; border-radius: 18px; }
+.login-hero h1 { font-size: 1.4rem; margin: 0 0 4px; }
+.login-links { display: flex; justify-content: space-between; gap: 12px; margin-top: 12px; font-size: 0.9rem; }
+.login details.card summary { list-style: none; }

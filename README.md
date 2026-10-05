@@ -79,8 +79,16 @@ Configuração, uma única vez:
    ```
 
 4. Em *Configurações do projeto → Geral*, copie o **ID do projeto** e a **chave de API da
-   Web** e cole em *Configurações* no app (PWA e Android). Crie a conta em um aparelho e
-   entre com o mesmo e-mail/senha nos outros.
+   Web**. Quem publica o app grava os dois uma vez em `web/js/config.js` (PWA) e em
+   `app/src/main/res/values/firebase.xml` (Android); assim quem usa só precisa fazer login.
+   Também dá para informar os valores no próprio aparelho, na tela de login ou em
+   *Configurações* (eles têm prioridade sobre os padrões).
+
+**Tela de login.** Ao abrir o app sem sessão aparece a tela de login (entrar, criar conta,
+redefinir senha por e-mail). A conta é o que habilita a sincronização; "Continuar sem conta"
+mantém a biblioteca só no aparelho, e o ícone ☁️ da biblioteca leva ao login a qualquer
+momento. "Sair", em *Configurações*, volta para a tela de login. Use o mesmo e-mail/senha
+em todos os aparelhos.
 
 Layout dos dados: `users/{uid}/items/{syncId}`, com os campos do item mais `deleted`,
 `thumb`, `client` e `serverUpdatedAt`.

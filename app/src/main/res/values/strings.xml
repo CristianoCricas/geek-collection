@@ -156,6 +156,27 @@
     <string name="sync_failed">Falha ao sincronizar: %1$s</string>
     <string name="sync_not_ready">Configure a sincronização nas configurações</string>
     <string name="sync_action">Sincronizar com a nuvem</string>
+    <string name="login_title">Entrar</string>
+    <string name="login_signup_title">Criar conta</string>
+    <string name="login_reset_title">Redefinir senha</string>
+    <string name="login_intro">Entre para sincronizar sua biblioteca entre o celular, o PWA e o app Android.</string>
+    <string name="login_reset_hint">Enviaremos um e-mail com o link para criar uma nova senha.</string>
+    <string name="login_reset_sent">E-mail enviado. Verifique sua caixa de entrada e depois entre com a nova senha.</string>
+    <string name="login_send_reset">Enviar e-mail</string>
+    <string name="login_have_account">Já tenho conta</string>
+    <string name="login_forgot">Esqueci a senha</string>
+    <string name="login_skip">Continuar sem conta</string>
+    <string name="login_skip_hint">Sem conta, a biblioteca fica só neste aparelho. Você pode entrar depois pelo ícone da nuvem.</string>
+    <string name="login_missing_email">Informe o e-mail.</string>
+    <string name="login_missing_password">Informe a senha.</string>
+    <string name="login_not_configured">A sincronização ainda não foi configurada neste app.</string>
+    <string name="login_config_title">Projeto Firebase</string>
+    <string name="login_config_hint">Quem publica o app define o projeto uma vez em res/values/firebase.xml. Também dá para informar aqui, neste aparelho.</string>
+    <string name="login_config_saved">Projeto salvo. Agora entre ou crie sua conta.</string>
+    <string name="login_connected">Conectado. Sincronizando…</string>
+    <string name="login_created">Conta criada. Sincronizando…</string>
+    <string name="settings_not_signed_in">Você não está conectado. A sincronização só funciona com uma conta.</string>
+    <string name="settings_go_login">Entrar ou criar conta</string>
 
     <!-- Detail -->
     <string name="detail_not_found">Item não encontrado</string>

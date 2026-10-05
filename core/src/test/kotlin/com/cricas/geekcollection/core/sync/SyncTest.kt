@@ -35,6 +35,7 @@ private class FakeBackend : HttpFetcher {
         return when {
             url.contains("accounts:signInWithPassword") -> """{"localId":"uid1","email":"a@b.c","idToken":"tok","refreshToken":"ref","expiresIn":"3600"}"""
             url.contains("accounts:signUp") -> throw HttpException(400, "EMAIL_EXISTS")
+            url.contains("accounts:sendOobCode") -> if (body.contains("nobody@")) throw HttpException(400, "EMAIL_NOT_FOUND") else "{}"
             url.contains("securetoken") -> """{"id_token":"tok2","refresh_token":"ref","user_id":"uid1","expires_in":"3600"}"""
             url.endsWith(":commit") -> {
                 val writes = Json.parseToJsonElement(body).jsonObject["writes"]!!.jsonArray
@@ -174,6 +175,18 @@ class SyncTest {
         assertFalse(store.items["l1"]!!.dirty)
         assertEquals("2026-01-05T00:00:00Z", store.cursor)
         assertTrue(statuses.any { it.startsWith("Enviando") })
+    }
+
+    @Test
+    fun `password reset posts to sendOobCode and translates errors`() = runTest {
+        val backend = FakeBackend()
+        val client = client(backend, MemoryAuth())
+        client.sendPasswordReset("a@b.c")
+        val call = backend.calls.last()
+        assertTrue(call.first.contains("accounts:sendOobCode?key=key"))
+        assertEquals("""{"requestType":"PASSWORD_RESET","email":"a@b.c"}""", call.second)
+        val error = runCatching { client.sendPasswordReset("nobody@x.y") }.exceptionOrNull()
+        assertEquals("E-mail não encontrado. Crie uma conta.", error?.message)
     }
 
     @Test

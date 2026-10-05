@@ -5,6 +5,8 @@ import { makeThumb } from './recognition/image.js';
 import { FirebaseClient } from './sync/firebase.js';
 import { runSync } from './sync/engine.js';
 import { VERSION } from './version.js';
+import { DEFAULT_FIREBASE } from './config.js';
+import { renderLogin } from './ui/login.js';
 import { GoogleSearch } from './lookup/google.js';
 import { GoogleBooks } from './lookup/books.js';
 import { Wikipedia } from './lookup/wikipedia.js';
@@ -19,8 +21,13 @@ import { toast } from './ui/components.js';
 // components.js reads the category list through this global to avoid a circular import.
 window.__model = { CATEGORIES };
 
-let settingsCache = { googleApiKey: '', googleCx: '', wikiLang: 'pt', ocrLangs: 'por+eng', firebaseProjectId: '', firebaseApiKey: '', autoSync: true };
-const settings = () => settingsCache;
+let settingsCache = { googleApiKey: '', googleCx: '', wikiLang: 'pt', ocrLangs: 'por+eng', firebaseProjectId: '', firebaseApiKey: '', autoSync: true, skipLogin: false };
+/** Settings with the deployment's default Firebase project applied when nothing was typed. */
+const settings = () => ({
+  ...settingsCache,
+  firebaseProjectId: settingsCache.firebaseProjectId || DEFAULT_FIREBASE.projectId,
+  firebaseApiKey: settingsCache.firebaseApiKey || DEFAULT_FIREBASE.apiKey,
+});
 
 const firebase = new FirebaseClient(settings, {
   load: () => Settings.getValue('firebaseAuth'),
@@ -106,6 +113,9 @@ async function route() {
     if (parts[0] === 'settings') {
       return await renderSettings(root, { navigate, services, version: VERSION, onSettingsChanged: (s) => { settingsCache = s; } });
     }
+    if (parts[0] === 'login') {
+      return await renderLogin(root, { navigate, services, version: VERSION, onSettingsChanged: (s) => { settingsCache = s; } });
+    }
     navigate('#/');
   } catch (err) {
     console.error(err);
@@ -129,6 +139,12 @@ window.addEventListener('hashchange', route);
 
 async function start() {
   settingsCache = await Settings.load();
+  // First screen: the login page, unless the user is signed in or chose to go on without an account.
+  const signedIn = await firebase.isSignedIn();
+  const hash = location.hash.replace(/^#/, '') || '/';
+  if (!signedIn && !settingsCache.skipLogin && hash === '/') {
+    location.hash = '#/login';
+  }
   await route();
   // Sync on launch and whenever the app comes back online.
   if (settingsCache.autoSync) sync.run({ silent: true }).catch(() => {});

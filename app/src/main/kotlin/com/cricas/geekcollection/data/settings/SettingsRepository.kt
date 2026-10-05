@@ -14,12 +14,18 @@ data class AppSettings(
     val firebaseProjectId: String = "",
     val firebaseApiKey: String = "",
     val autoSync: Boolean = true,
+    /** User chose to use the app without an account; do not show the login screen on start. */
+    val skipLogin: Boolean = false,
 )
 
 class SettingsRepository(context: Context) {
 
     private val prefs: SharedPreferences =
         context.getSharedPreferences("geek_collection_settings", Context.MODE_PRIVATE)
+
+    /** Deployment defaults (res/values/firebase.xml); values typed in Settings override them. */
+    private val defaultProjectId: String = context.getString(com.cricas.geekcollection.R.string.firebase_project_id)
+    private val defaultApiKey: String = context.getString(com.cricas.geekcollection.R.string.firebase_api_key)
 
     private val _settings = MutableStateFlow(load())
     val settings: StateFlow<AppSettings> = _settings.asStateFlow()
@@ -33,6 +39,7 @@ class SettingsRepository(context: Context) {
             .putString(KEY_FB_PROJECT, settings.firebaseProjectId.trim())
             .putString(KEY_FB_KEY, settings.firebaseApiKey.trim())
             .putBoolean(KEY_AUTO_SYNC, settings.autoSync)
+            .putBoolean(KEY_SKIP_LOGIN, settings.skipLogin)
             .apply()
         _settings.value = load()
     }
@@ -43,7 +50,14 @@ class SettingsRepository(context: Context) {
         firebaseProjectId = prefs.getString(KEY_FB_PROJECT, "") ?: "",
         firebaseApiKey = prefs.getString(KEY_FB_KEY, "") ?: "",
         autoSync = prefs.getBoolean(KEY_AUTO_SYNC, true),
+        skipLogin = prefs.getBoolean(KEY_SKIP_LOGIN, false),
     )
+
+    /** Effective Firebase config: typed values first, then the deployment defaults. */
+    val firebaseProjectId: String get() = current.firebaseProjectId.ifBlank { defaultProjectId }
+    val firebaseApiKey: String get() = current.firebaseApiKey.ifBlank { defaultApiKey }
+
+    fun setSkipLogin(skip: Boolean) = update(current.copy(skipLogin = skip))
 
     // ---- sync state (cursor + last run) ----
     var syncCursor: String?
@@ -89,6 +103,7 @@ class SettingsRepository(context: Context) {
         const val KEY_FB_PROJECT = "firebase_project_id"
         const val KEY_FB_KEY = "firebase_api_key"
         const val KEY_AUTO_SYNC = "auto_sync"
+        const val KEY_SKIP_LOGIN = "skip_login"
         const val KEY_SYNC_CURSOR = "sync_cursor"
         const val KEY_LAST_SYNC = "last_sync_at"
         const val KEY_AUTH_UID = "auth_uid"

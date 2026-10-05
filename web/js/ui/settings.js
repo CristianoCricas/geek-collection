@@ -49,7 +49,7 @@ export async function renderSettings(root, { navigate, services, onSettingsChang
         <div class="card" id="sync-card">
           <h3>☁️ Sincronização na nuvem</h3>
           <p class="hint">Mantém a biblioteca igual em todos os seus aparelhos (PWA e app Android) usando o <strong>Firebase</strong> do Google, no plano gratuito. Só o que foi criado ou alterado desde a última sincronização é enviado ou recebido.</p>
-          <details ${s.firebaseProjectId ? '' : 'open'}>
+          <details ${services.sync.firebase.isConfigured ? '' : 'open'}>
             <summary class="hint" style="cursor:pointer">Como configurar (uma vez)</summary>
             <ol class="steps hint">
               <li>Em <a href="https://console.firebase.google.com/" target="_blank" rel="noopener">console.firebase.google.com</a>, crie um projeto.</li>
@@ -68,11 +68,11 @@ service cloud.firestore {
           </details>
           <div class="field">
             <label for="firebaseProjectId">ID do projeto Firebase</label>
-            <input class="input" id="firebaseProjectId" name="firebaseProjectId" value="${esc(s.firebaseProjectId)}" autocomplete="off" spellcheck="false" placeholder="ex.: geek-collection-1234a">
+            <input class="input" id="firebaseProjectId" name="firebaseProjectId" value="${esc(s.firebaseProjectId)}" autocomplete="off" spellcheck="false" placeholder="${esc(services.sync.firebase.config.projectId || 'ex.: geek-collection-1234a')}">
           </div>
           <div class="field">
             <label for="firebaseApiKey">Chave de API da Web</label>
-            <input class="input" id="firebaseApiKey" name="firebaseApiKey" value="${esc(s.firebaseApiKey)}" autocomplete="off" spellcheck="false">
+            <input class="input" id="firebaseApiKey" name="firebaseApiKey" value="${esc(s.firebaseApiKey)}" autocomplete="off" spellcheck="false" placeholder="${services.sync.firebase.config.apiKey ? '(usando a chave padrão do app)' : ''}">
           </div>
           <label class="toggle"><input type="checkbox" name="autoSync" ${s.autoSync === false ? '' : 'checked'}> <span>Sincronizar automaticamente<small>Ao abrir o app, ao voltar a ficar online e alguns segundos após cada alteração.</small></span></label>
           <hr class="divider">
@@ -84,20 +84,8 @@ service cloud.firestore {
             </div>
             <p class="hint" id="sync-status"></p>
           ` : `
-            <div class="field">
-              <label for="syncEmail">E-mail</label>
-              <input class="input" id="syncEmail" type="email" autocomplete="email" ${s.firebaseApiKey ? '' : 'disabled'}>
-            </div>
-            <div class="field">
-              <label for="syncPassword">Senha (mínimo 6 caracteres)</label>
-              <input class="input" id="syncPassword" type="password" autocomplete="current-password" ${s.firebaseApiKey ? '' : 'disabled'}>
-            </div>
-            <div class="btn-group horizontal">
-              <button type="button" class="btn small" data-action="sign-in" ${s.firebaseApiKey ? '' : 'disabled'}>Entrar</button>
-              <button type="button" class="btn small outline" data-action="sign-up" ${s.firebaseApiKey ? '' : 'disabled'}>Criar conta</button>
-            </div>
-            <p class="hint">${s.firebaseApiKey ? 'Use o mesmo e-mail e senha em todos os aparelhos.' : 'Preencha e salve o projeto Firebase para habilitar o login.'}</p>
-            <p class="hint error" id="sync-error"></p>
+            <p class="hint">Você não está conectado. A sincronização só funciona com uma conta.</p>
+            <a class="btn small" href="#/login" data-action="go-login">Entrar ou criar conta</a>
           `}
         </div>
 
@@ -149,30 +137,19 @@ service cloud.firestore {
     onSettingsChanged(next);
     return next;
   };
-  const showError = (msg) => { const el = root.querySelector('#sync-error'); if (el) el.textContent = msg; };
-  const credential = async (method) => {
-    const next = await saveConfig();
-    if (!next.firebaseProjectId || !next.firebaseApiKey) { showError('Informe o ID do projeto e a chave de API.'); return; }
-    const email = root.querySelector('#syncEmail').value.trim();
-    const password = root.querySelector('#syncPassword').value;
-    if (!email || !password) { showError('Informe e-mail e senha.'); return; }
-    showError('');
-    try {
-      await sync.firebase[method](email, password);
-      toast(method === 'signUp' ? 'Conta criada' : 'Conectado');
-      await renderSettings(root, { navigate, services, onSettingsChanged, version });
-      sync.run({ onStatus: (m) => { const el = root.querySelector('#sync-status'); if (el) el.textContent = m; } }).catch(() => {});
-    } catch (err) {
-      showError(err.message || 'Falha na autenticação');
-    }
-  };
-  root.querySelector('[data-action="sign-in"]')?.addEventListener('click', () => credential('signIn'));
-  root.querySelector('[data-action="sign-up"]')?.addEventListener('click', () => credential('signUp'));
+  root.querySelector('[data-action="go-login"]')?.addEventListener('click', async (e) => {
+    e.preventDefault();
+    await saveConfig();
+    navigate('#/login');
+  });
   root.querySelector('[data-action="sign-out"]')?.addEventListener('click', async () => {
     await sync.firebase.signOut();
     await Settings.setValue('syncCursor', null);
+    const next = { ...(await Settings.load()), skipLogin: false };
+    await Settings.save(next);
+    onSettingsChanged(next);
     toast('Desconectado');
-    renderSettings(root, { navigate, services, onSettingsChanged, version });
+    navigate('#/login');
   });
   root.querySelector('[data-action="sync-now"]')?.addEventListener('click', async () => {
     await saveConfig();

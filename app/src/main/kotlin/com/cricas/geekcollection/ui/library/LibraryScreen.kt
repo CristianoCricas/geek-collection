@@ -83,6 +83,7 @@ fun LibraryScreen(
     onAddManually: () -> Unit,
     onAddByPhoto: () -> Unit,
     onOpenSettings: () -> Unit,
+    onOpenLogin: () -> Unit = onOpenSettings,
 ) {
     val viewModel: LibraryViewModel = viewModel { LibraryViewModel(container.repository) }
     val state by viewModel.uiState.collectAsStateWithLifecycle()
@@ -141,7 +142,7 @@ fun LibraryScreen(
                     IconButton(
                         onClick = {
                             if (container.syncManager.canSync) container.syncManager.syncNow()
-                            else { Toast.makeText(context, R.string.sync_not_ready, Toast.LENGTH_SHORT).show(); onOpenSettings() }
+                            else onOpenLogin()
                         },
                         enabled = !syncState.running,
                     ) {

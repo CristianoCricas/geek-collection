@@ -8,7 +8,7 @@ const SHARE_CACHE = 'geek-share';
 const SHELL = [
   './', './index.html', './manifest.webmanifest', './css/app.css',
   './js/main.js', './js/db.js', './js/model.js', './js/version.js',
-  './js/sync/firebase.js', './js/sync/engine.js',
+  './js/sync/firebase.js', './js/sync/engine.js', './js/config.js', './js/ui/login.js',
   './js/recognition/heuristics.js', './js/recognition/image.js', './js/recognition/barcode.js',
   './js/recognition/ocr.js', './js/recognition/recognizer.js',
   './js/lookup/http.js', './js/lookup/google.js', './js/lookup/books.js', './js/lookup/wikipedia.js', './js/lookup/service.js',

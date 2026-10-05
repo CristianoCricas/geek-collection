@@ -129,7 +129,7 @@ export async function renderLibrary(root, { services } = {}) {
     }
     if (btn.dataset.action === 'sync') {
       services.sync.canSync().then((ok) => {
-        if (!ok) { window.location.hash = '#/settings'; return; }
+        if (!ok) { window.location.hash = '#/login'; return; }
         services.sync.run().catch(() => {});
       });
       return;

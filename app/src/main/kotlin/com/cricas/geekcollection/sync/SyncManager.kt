@@ -76,6 +76,7 @@ class SyncManager(
     fun signOut() {
         firebase.signOut()
         settings.syncCursor = null
+        settings.setSkipLogin(false)
         _state.update { SyncState() }
     }
 }

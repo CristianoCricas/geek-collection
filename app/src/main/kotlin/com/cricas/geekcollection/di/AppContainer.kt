@@ -42,7 +42,7 @@ class AppContainer(context: Context) {
     val syncManager: SyncManager by lazy {
         val firebase = FirebaseClient(
             http = httpFetcher,
-            configProvider = { settings.current.let { FirebaseConfig(it.firebaseProjectId, it.firebaseApiKey) } },
+            configProvider = { FirebaseConfig(settings.firebaseProjectId, settings.firebaseApiKey) },
             authStore = settings.authStore,
         )
         SyncManager(firebase, SyncEngine(firebase, RoomSyncStore(database.itemDao(), imageStore, settings)), settings)

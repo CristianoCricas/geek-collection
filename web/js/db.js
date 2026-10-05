@@ -100,7 +100,7 @@ export const Images = {
   }),
 };
 
-const DEFAULT_SETTINGS = { googleApiKey: '', googleCx: '', wikiLang: 'pt', ocrLangs: 'por+eng', firebaseProjectId: '', firebaseApiKey: '', autoSync: true };
+const DEFAULT_SETTINGS = { googleApiKey: '', googleCx: '', wikiLang: 'pt', ocrLangs: 'por+eng', firebaseProjectId: '', firebaseApiKey: '', autoSync: true, skipLogin: false };
 
 export const Settings = {
   async load() {
