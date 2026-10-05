@@ -1,6 +1,6 @@
 /* Service worker: offline app shell, runtime cache for the vendored
  * recognition engines, and the Web Share Target handler. */
-const VERSION = '0.2.0';
+const VERSION = '0.1.0';
 const SHELL_CACHE = `geek-shell-${VERSION}`;
 const RUNTIME_CACHE = `geek-runtime-${VERSION}`;
 const SHARE_CACHE = 'geek-share';
