@@ -27,7 +27,7 @@ concurrency:
 
 jobs:
   bump:
-    if: github.ref == format('refs/heads/{0}', github.event.repository.default_branch) && !startsWith(github.event.head_commit.message, 'chore(release)')
+    if: github.ref == format('refs/heads/{0}', github.event.repository.default_branch)
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -43,10 +43,24 @@ jobs:
         id: decide
         env:
           REQUESTED: ${{ github.event.inputs.bump || 'auto' }}
+          HEAD_MESSAGE: ${{ github.event.head_commit.message }}
         run: |
           set -euo pipefail
           last_tag="$(git describe --tags --abbrev=0 --match 'v*' 2>/dev/null || true)"
           subjects=""
+          case "$HEAD_MESSAGE" in
+            "chore(release)"*)
+              # A release commit (manual version set or our own bump): only make sure its tag exists.
+              echo "Release commit; ensuring the tag for the current version exists."
+              echo "kind=ensure-tag" >> "$GITHUB_OUTPUT"
+              exit 0 ;;
+          esac
+          if [ -z "$last_tag" ] && [ "$REQUESTED" = "auto" ]; then
+            # First run: the VERSION file is the current release; just tag it.
+            echo "No release tag yet; tagging the current version without bumping."
+            echo "kind=ensure-tag" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
           if [ "$REQUESTED" != "auto" ]; then
             kind="$REQUESTED"
           else
@@ -62,8 +76,21 @@ jobs:
           echo "Commits considered:"; echo "${subjects:-<manual>}"
           echo "kind=$kind" >> "$GITHUB_OUTPUT"
 
+      - name: Ensure the current version is tagged
+        if: steps.decide.outputs.kind == 'ensure-tag'
+        run: |
+          set -euo pipefail
+          v="v$(tr -d '[:space:]' < VERSION)"
+          if git ls-remote --exit-code --tags origin "refs/tags/$v" >/dev/null 2>&1; then
+            echo "$v already exists."; exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git tag -a "$v" -m "Geek Collection ${v#v}"
+          git push origin "refs/tags/$v"
+
       - name: Bump files
-        if: steps.decide.outputs.kind != 'none'
+        if: steps.decide.outputs.kind != 'none' && steps.decide.outputs.kind != 'ensure-tag'
         id: bump
         run: |
           set -euo pipefail
@@ -72,18 +99,20 @@ jobs:
           git diff --stat
 
       - name: Commit, tag and push
-        if: steps.decide.outputs.kind != 'none'
+        if: steps.decide.outputs.kind != 'none' && steps.decide.outputs.kind != 'ensure-tag'
         run: |
           set -euo pipefail
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add VERSION web/js/version.js web/sw.js web/package.json
           git commit -m "chore(release): bump version to ${{ steps.bump.outputs.next }} (${{ steps.decide.outputs.kind }})"
-          git tag "v${{ steps.bump.outputs.next }}"
-          git push origin HEAD:${{ github.ref_name }} --tags
+          # A stale tag with this name may exist if the version was set back by hand; move it.
+          git tag -f -a "v${{ steps.bump.outputs.next }}" -m "Geek Collection ${{ steps.bump.outputs.next }}"
+          git push origin HEAD:${{ github.ref_name }}
+          git push --force origin "refs/tags/v${{ steps.bump.outputs.next }}"
 
       - name: Build and deploy the new version
-        if: steps.decide.outputs.kind != 'none'
+        if: steps.decide.outputs.kind != 'none' && steps.decide.outputs.kind != 'ensure-tag'
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
