@@ -1,6 +1,6 @@
 {
   "name": "geek-collection-pwa",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "private": true,
   "description": "Geek Collection PWA: biblioteca geek com reconhecimento de imagem e pesquisa no Google",
   "type": "module",
