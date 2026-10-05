@@ -32,6 +32,7 @@ import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.AssistChip
 import androidx.compose.material3.ExtendedFloatingActionButton
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.Icon
@@ -58,6 +59,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.cricas.geekcollection.R
 import com.cricas.geekcollection.core.model.CollectionItem
 import com.cricas.geekcollection.core.model.ItemCategory
+import com.cricas.geekcollection.data.ProgressFilter
 import com.cricas.geekcollection.data.SortOrder
 import com.cricas.geekcollection.di.AppContainer
 import com.cricas.geekcollection.ui.components.CompletionBar
@@ -158,6 +160,7 @@ fun LibraryScreen(
             )
 
             CategoryFilterRow(selected = filter.category, onSelect = viewModel::setCategory)
+            ProgressFilterRow(selected = filter.progress, onSelect = viewModel::setProgress)
 
             when {
                 !state.loaded -> Unit
@@ -205,6 +208,40 @@ private fun CategoryFilterRow(selected: ItemCategory?, onSelect: (ItemCategory?)
                 onClick = { onSelect(if (selected == category) null else category) },
                 label = { Text(category.label()) },
                 leadingIcon = { Icon(category.icon(), contentDescription = null, modifier = Modifier.size(18.dp)) },
+            )
+        }
+    }
+}
+
+@Composable
+private fun progressFilterLabel(filter: ProgressFilter): String = when (filter) {
+    ProgressFilter.BACKLOG -> "📥 " + stringResource(R.string.library_progress_backlog)
+    ProgressFilter.IN_PROGRESS -> "▶️ " + stringResource(R.string.library_progress_in_progress)
+    ProgressFilter.PAUSED -> "⏸️ " + stringResource(R.string.library_progress_paused)
+    ProgressFilter.ABANDONED -> "⛔ " + stringResource(R.string.library_progress_abandoned)
+    ProgressFilter.FINISHED -> "🏁 " + stringResource(R.string.library_progress_finished)
+    ProgressFilter.PLATINUM -> "🏆 " + stringResource(R.string.library_progress_platinum)
+}
+
+@Composable
+private fun ProgressFilterRow(selected: ProgressFilter?, onSelect: (ProgressFilter?) -> Unit) {
+    LazyRow(
+        contentPadding = PaddingValues(horizontal = 16.dp),
+        horizontalArrangement = Arrangement.spacedBy(8.dp),
+        modifier = Modifier.padding(bottom = 8.dp),
+    ) {
+        item {
+            FilterChip(
+                selected = selected == null,
+                onClick = { onSelect(null) },
+                label = { Text(stringResource(R.string.library_progress_all)) },
+            )
+        }
+        items(ProgressFilter.entries) { filter ->
+            FilterChip(
+                selected = selected == filter,
+                onClick = { onSelect(if (selected == filter) null else filter) },
+                label = { Text(progressFilterLabel(filter)) },
             )
         }
     }
@@ -259,9 +296,15 @@ private fun ItemCard(item: CollectionItem, onClick: () -> Unit) {
                         overflow = TextOverflow.Ellipsis,
                     )
                 }
-                if (item.category.supportsCompletion) {
+                if (item.backlog) {
+                    AssistChip(
+                        onClick = onClick,
+                        label = { Text("📥 " + stringResource(R.string.flag_backlog)) },
+                        modifier = Modifier.height(28.dp),
+                    )
+                } else if (item.category.supportsCompletion) {
                     Spacer(Modifier.height(8.dp))
-                    CompletionBar(percent = item.completionOrZero)
+                    CompletionBar(item = item)
                 }
             }
         }

@@ -33,6 +33,13 @@
     <string name="library_sort_recent">Recentes</string>
     <string name="library_sort_title">Título</string>
     <string name="library_sort_completion">Conclusão</string>
+    <string name="library_progress_all">Tudo</string>
+    <string name="library_progress_backlog">Backlog</string>
+    <string name="library_progress_in_progress">Em andamento</string>
+    <string name="library_progress_paused">Pausados</string>
+    <string name="library_progress_abandoned">Abandonados</string>
+    <string name="library_progress_finished">Finalizados</string>
+    <string name="library_progress_platinum">Platinados</string>
 
     <!-- Categories -->
     <string name="category_board_game">Jogo de tabuleiro</string>
@@ -54,6 +61,17 @@
     <string name="field_platform_custom_hint">Digite o nome da plataforma</string>
     <string name="field_completion">Percentual de conclusão</string>
     <string name="field_completion_value">%1$d%% concluído</string>
+    <string name="field_status">Status</string>
+    <string name="status_in_progress">Em andamento</string>
+    <string name="status_paused">Pausado</string>
+    <string name="status_abandoned">Abandonado</string>
+    <string name="status_finished">Finalizado</string>
+    <string name="status_story_finished">História finalizada</string>
+    <string name="status_with_percent">%1$s · %2$d%%</string>
+    <string name="flag_platinum">Platinado</string>
+    <string name="flag_platinum_hint">Todos os troféus/conquistas. Marca 100%% e história finalizada.</string>
+    <string name="flag_backlog">Backlog</string>
+    <string name="flag_backlog_hint">Ainda não comecei.</string>
     <string name="field_description">Descrição</string>
     <string name="field_creator_author">Autor</string>
     <string name="field_creator_developer">Desenvolvedora</string>

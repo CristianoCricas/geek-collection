@@ -9,6 +9,7 @@ import com.cricas.geekcollection.core.lookup.LookupService
 import com.cricas.geekcollection.core.model.CollectionItem
 import com.cricas.geekcollection.core.model.ItemCategory
 import com.cricas.geekcollection.core.model.Platforms
+import com.cricas.geekcollection.core.model.ProgressStatus
 import com.cricas.geekcollection.data.ImageStore
 import com.cricas.geekcollection.data.ItemRepository
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -25,6 +26,9 @@ data class EditFormState(
     /** True when the platform is typed manually instead of picked from the list. */
     val customPlatform: Boolean = false,
     val completionPercent: Int = 0,
+    val progressStatus: ProgressStatus = ProgressStatus.IN_PROGRESS,
+    val platinum: Boolean = false,
+    val backlog: Boolean = false,
     val description: String = "",
     val creator: String = "",
     val publisher: String = "",
@@ -47,6 +51,9 @@ data class EditFormState(
         category = category,
         platform = platform.takeIf { it.isNotBlank() },
         completionPercent = completionPercent,
+        progressStatus = progressStatus,
+        platinum = platinum,
+        backlog = backlog,
         description = description,
         creator = creator,
         publisher = publisher,
@@ -69,6 +76,9 @@ data class EditFormState(
             platform = item.platform.orEmpty(),
             customPlatform = item.platform?.let { Platforms.byName(it) == null } ?: false,
             completionPercent = item.completionPercent ?: 0,
+            progressStatus = item.progressStatus,
+            platinum = item.platinum,
+            backlog = item.backlog,
             description = item.description.orEmpty(),
             creator = item.creator.orEmpty(),
             publisher = item.publisher.orEmpty(),
@@ -130,6 +140,9 @@ class EditItemViewModel(
             category = category,
             platform = if (category.supportsPlatform) platform else "",
             completionPercent = if (category.supportsCompletion) completionPercent else 0,
+            progressStatus = if (category.supportsCompletion) progressStatus else ProgressStatus.IN_PROGRESS,
+            platinum = category.supportsPlatinum && platinum,
+            backlog = category.supportsBacklog && backlog,
         )
     }
 

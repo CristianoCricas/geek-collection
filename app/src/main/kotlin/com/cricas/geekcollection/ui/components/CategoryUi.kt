@@ -15,6 +15,7 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.stringResource
 import com.cricas.geekcollection.R
 import com.cricas.geekcollection.core.model.ItemCategory
+import com.cricas.geekcollection.core.model.ProgressStatus
 
 @Composable
 fun ItemCategory.label(): String = stringResource(labelRes())
@@ -50,3 +51,14 @@ fun ItemCategory.creatorLabelRes(): Int = when (this) {
     ItemCategory.BOARD_GAME -> R.string.field_creator_designer
     else -> R.string.field_creator_brand
 }
+
+/** Status label; video games say "História finalizada" instead of "Finalizado". */
+fun ProgressStatus.labelRes(category: ItemCategory): Int = when (this) {
+    ProgressStatus.IN_PROGRESS -> R.string.status_in_progress
+    ProgressStatus.PAUSED -> R.string.status_paused
+    ProgressStatus.ABANDONED -> R.string.status_abandoned
+    ProgressStatus.FINISHED -> if (category == ItemCategory.VIDEO_GAME) R.string.status_story_finished else R.string.status_finished
+}
+
+@Composable
+fun ProgressStatus.label(category: ItemCategory): String = stringResource(labelRes(category))

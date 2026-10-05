@@ -11,6 +11,12 @@ data class CollectionItem(
     val platform: String? = null,
     /** 0..100, only meaningful when [ItemCategory.supportsCompletion]. */
     val completionPercent: Int? = null,
+    /** Only meaningful when [ItemCategory.supportsCompletion]. */
+    val progressStatus: ProgressStatus = ProgressStatus.IN_PROGRESS,
+    /** All trophies/achievements earned; implies 100% and [ProgressStatus.FINISHED]. Video games only. */
+    val platinum: Boolean = false,
+    /** Not started yet. Games (video and board) only. */
+    val backlog: Boolean = false,
     val description: String? = null,
     /** Author, developer, designer or manufacturer depending on the category. */
     val creator: String? = null,
@@ -35,7 +41,18 @@ data class CollectionItem(
     fun normalized(): CollectionItem = copy(
         title = title.trim(),
         platform = if (category.supportsPlatform) platform?.trim()?.takeIf { it.isNotEmpty() } else null,
-        completionPercent = if (category.supportsCompletion) completionPercent?.coerceIn(0, 100) else null,
+        completionPercent = when {
+            !category.supportsCompletion -> null
+            category.supportsPlatinum && platinum -> 100
+            else -> (completionPercent ?: 0).coerceIn(0, 100)
+        },
+        progressStatus = when {
+            !category.supportsCompletion -> ProgressStatus.IN_PROGRESS
+            category.supportsPlatinum && platinum -> ProgressStatus.FINISHED
+            else -> progressStatus
+        },
+        platinum = category.supportsPlatinum && platinum,
+        backlog = category.supportsBacklog && backlog,
         description = description?.trim()?.takeIf { it.isNotEmpty() },
         creator = creator?.trim()?.takeIf { it.isNotEmpty() },
         publisher = publisher?.trim()?.takeIf { it.isNotEmpty() },

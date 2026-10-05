@@ -35,6 +35,9 @@ pode ser instalada como app.
 - Mesmas regras de cadastro do app nativo: plataforma para games/consoles/acessórios,
   percentual de conclusão para tabuleiro/games/livros/HQs, favoritos, busca, filtros,
   ordenação.
+- Progresso além do percentual: status **em andamento / pausado / abandonado / finalizado**
+  (para games, "história finalizada"), flag **platinado** (games; marca 100 % e finalizado) e
+  flag **backlog** para jogos em geral (games e tabuleiro). A biblioteca filtra por todos eles.
 - Dados em IndexedDB (fotos incluídas), **exportação/importação em JSON** para backup.
 - Service worker: funciona offline, inclusive o OCR (motor e idiomas embutidos em `web/vendor/`).
 
@@ -54,7 +57,9 @@ npx http-server . -p 8080 -c-1 # abre http://localhost:8080
   - *Games, consoles e acessórios*: campo de **plataforma** (lista curada de Nintendo, Sony,
     Microsoft, Sega, Atari, PC etc., ou nome livre).
   - *Jogos de tabuleiro, games, livros e HQs*: **percentual de conclusão** (0 a 100 %), com
-    barra de progresso na lista e ajuste rápido na tela de detalhes.
+    barra de progresso na lista e ajuste rápido na tela de detalhes, mais o status
+    (em andamento, pausado, abandonado, história finalizada), a flag **platinado** (games)
+    e a flag **backlog** (games e tabuleiro).
 - **Adicionar por foto (reconhecimento de imagem)**: fotografe a capa, a caixa ou o código de
   barras. O app roda, no próprio aparelho, os modelos do ML Kit para:
   - ler **códigos de barras** (EAN/UPC/ISBN);

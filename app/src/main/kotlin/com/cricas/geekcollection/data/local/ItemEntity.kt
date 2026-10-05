@@ -6,6 +6,7 @@ import androidx.room.Index
 import androidx.room.PrimaryKey
 import com.cricas.geekcollection.core.model.CollectionItem
 import com.cricas.geekcollection.core.model.ItemCategory
+import com.cricas.geekcollection.core.model.ProgressStatus
 
 @Entity(
     tableName = "items",
@@ -17,6 +18,9 @@ data class ItemEntity(
     val category: String,
     val platform: String? = null,
     val completionPercent: Int? = null,
+    @ColumnInfo(defaultValue = "IN_PROGRESS") val progressStatus: String = ProgressStatus.IN_PROGRESS.name,
+    @ColumnInfo(defaultValue = "0") val platinum: Boolean = false,
+    @ColumnInfo(defaultValue = "0") val backlog: Boolean = false,
     val description: String? = null,
     val creator: String? = null,
     val publisher: String? = null,
@@ -37,6 +41,9 @@ data class ItemEntity(
         category = ItemCategory.fromName(category),
         platform = platform,
         completionPercent = completionPercent,
+        progressStatus = ProgressStatus.fromName(progressStatus),
+        platinum = platinum,
+        backlog = backlog,
         description = description,
         creator = creator,
         publisher = publisher,
@@ -59,6 +66,9 @@ data class ItemEntity(
             category = item.category.name,
             platform = item.platform,
             completionPercent = item.completionPercent,
+            progressStatus = item.progressStatus.name,
+            platinum = item.platinum,
+            backlog = item.backlog,
             description = item.description,
             creator = item.creator,
             publisher = item.publisher,

@@ -1,8 +1,22 @@
 import { CATEGORIES, category, completionOf } from '../model.js';
 import { Items } from '../db.js';
-import { appBar, coverHtml, esc, hydrateCovers, progressHtml, categoryChips } from './components.js';
+import { appBar, backlogTag, coverHtml, esc, hydrateCovers, progressHtml, categoryChips } from './components.js';
 
-const state = { query: '', category: '', favorites: false, sort: 'recent' };
+const state = { query: '', category: '', favorites: false, sort: 'recent', progress: '' };
+
+// Progress filters: a status, or the backlog / platinum flags.
+const PROGRESS_FILTERS = [
+  ['', 'Tudo'], ['BACKLOG', '📥 Backlog'], ['IN_PROGRESS', '▶️ Em andamento'], ['PAUSED', '⏸️ Pausados'],
+  ['ABANDONED', '⛔ Abandonados'], ['FINISHED', '🏁 Finalizados'], ['PLATINUM', '🏆 Platinados'],
+];
+
+function matchesProgress(it) {
+  const f = state.progress;
+  if (!f) return true;
+  if (f === 'BACKLOG') return Boolean(it.backlog);
+  if (f === 'PLATINUM') return Boolean(it.platinum);
+  return category(it.category).completion && (it.progressStatus || 'IN_PROGRESS') === f && !it.backlog;
+}
 
 const SORTS = { recent: 'Recentes', title: 'Título', completion: 'Conclusão' };
 
@@ -11,6 +25,7 @@ function filterItems(items) {
   let list = items.filter((it) =>
     (!state.category || it.category === state.category)
     && (!state.favorites || it.favorite)
+    && matchesProgress(it)
     && (!q || [it.title, it.platform, it.creator, it.publisher, it.notes, category(it.category).label]
       .some((v) => v && String(v).toLowerCase().includes(q))));
   list = list.sort((a, b) => {
@@ -31,7 +46,8 @@ function itemCard(it) {
         <p class="item-title">${esc(it.title)}${it.favorite ? '<span class="fav" aria-label="Favorito">♥</span>' : ''}</p>
         <p class="item-sub">${esc(sub)}</p>
         ${it.creator ? `<p class="item-sub">${esc(it.creator)}</p>` : ''}
-        ${cat.completion ? progressHtml(it) : ''}
+        ${backlogTag(it)}
+        ${cat.completion && !it.backlog ? progressHtml(it) : ''}
       </div>
     </article>`;
 }
@@ -57,6 +73,7 @@ export async function renderLibrary(root) {
         ${state.query ? '<button class="icon-btn clear" data-action="clear" aria-label="Limpar">✕</button>' : ''}
       </div>
       ${categoryChips(state.category, { allLabel: 'Todos' })}
+      <div class="chips" data-chips="progress" style="padding-top:0">${PROGRESS_FILTERS.map(([v, l]) => `<button type="button" class="chip ${state.progress === v ? 'selected' : ''}" data-value="${v}">${l}</button>`).join('')}</div>
       ${items.length === 0 ? `
         <div class="empty">
           <div class="big">🎮📚🎲</div>
@@ -86,10 +103,16 @@ export async function renderLibrary(root) {
       });
     }, 180);
   });
-  root.querySelector('[data-chips]').addEventListener('click', (e) => {
+  root.querySelector('[data-chips="category"]').addEventListener('click', (e) => {
     const chip = e.target.closest('.chip');
     if (!chip) return;
     state.category = chip.dataset.value === state.category ? '' : chip.dataset.value;
+    renderLibrary(root);
+  });
+  root.querySelector('[data-chips="progress"]').addEventListener('click', (e) => {
+    const chip = e.target.closest('.chip');
+    if (!chip) return;
+    state.progress = chip.dataset.value;
     renderLibrary(root);
   });
   view.addEventListener('click', (e) => {

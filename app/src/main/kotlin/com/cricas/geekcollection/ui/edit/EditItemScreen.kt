@@ -43,6 +43,7 @@ import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Slider
+import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
@@ -62,6 +63,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.cricas.geekcollection.R
 import com.cricas.geekcollection.core.model.ItemCategory
 import com.cricas.geekcollection.core.model.Platforms
+import com.cricas.geekcollection.core.model.ProgressStatus
 import com.cricas.geekcollection.di.AppContainer
 import com.cricas.geekcollection.ui.components.CompletionBar
 import com.cricas.geekcollection.ui.components.ItemCover
@@ -69,9 +71,10 @@ import com.cricas.geekcollection.ui.components.LookupResultsSheet
 import com.cricas.geekcollection.ui.components.creatorLabelRes
 import com.cricas.geekcollection.ui.components.icon
 import com.cricas.geekcollection.ui.components.label
+import com.cricas.geekcollection.ui.components.labelRes
 import kotlin.math.roundToInt
 
-@OptIn(ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
 @Composable
 fun EditItemScreen(
     container: AppContainer,
@@ -217,19 +220,60 @@ fun EditItemScreen(
                 )
             }
 
-            // Completion (board games, games, books, comics)
+            // Completion + status (board games, games, books, comics)
             if (form.category.supportsCompletion) {
                 Column {
                     Text(stringResource(R.string.field_completion), style = MaterialTheme.typography.titleSmall)
                     Spacer(Modifier.height(6.dp))
-                    CompletionBar(percent = form.completionPercent)
+                    CompletionBar(item = form.toItem())
                     Slider(
-                        value = form.completionPercent.toFloat(),
+                        value = if (form.platinum) 100f else form.completionPercent.toFloat(),
                         onValueChange = { v -> viewModel.update { copy(completionPercent = v.roundToInt()) } },
                         valueRange = 0f..100f,
                         steps = 19,
+                        enabled = !form.platinum,
                     )
+                    Text(stringResource(R.string.field_status), style = MaterialTheme.typography.titleSmall)
+                    Spacer(Modifier.height(6.dp))
+                    FlowRow(horizontalArrangement = Arrangement.spacedBy(6.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                        ProgressStatus.entries.forEach { status ->
+                            FilterChip(
+                                selected = form.progressStatus == status,
+                                onClick = {
+                                    viewModel.update {
+                                        copy(progressStatus = status, platinum = if (status == ProgressStatus.FINISHED) platinum else false)
+                                    }
+                                },
+                                label = { Text(stringResource(status.labelRes(form.category))) },
+                            )
+                        }
+                    }
                 }
+            }
+            if (form.category.supportsPlatinum) {
+                FlagSwitch(
+                    title = "🏆 " + stringResource(R.string.flag_platinum),
+                    hint = stringResource(R.string.flag_platinum_hint),
+                    checked = form.platinum,
+                    onCheckedChange = { on ->
+                        viewModel.update {
+                            if (on) copy(platinum = true, completionPercent = 100, progressStatus = ProgressStatus.FINISHED, backlog = false)
+                            else copy(platinum = false)
+                        }
+                    },
+                )
+            }
+            if (form.category.supportsBacklog) {
+                FlagSwitch(
+                    title = "📥 " + stringResource(R.string.flag_backlog),
+                    hint = stringResource(R.string.flag_backlog_hint),
+                    checked = form.backlog,
+                    onCheckedChange = { on ->
+                        viewModel.update {
+                            if (on) copy(backlog = true, progressStatus = ProgressStatus.IN_PROGRESS, platinum = false) else copy(backlog = false)
+                        }
+                    },
+                )
             }
 
             OutlinedTextField(
@@ -289,6 +333,17 @@ fun EditItemScreen(
             onPick = viewModel::applyResult,
             onRetry = viewModel::searchOnline,
         )
+    }
+}
+
+@Composable
+private fun FlagSwitch(title: String, hint: String, checked: Boolean, onCheckedChange: (Boolean) -> Unit) {
+    Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+        Column(modifier = Modifier.weight(1f)) {
+            Text(title, style = MaterialTheme.typography.bodyMedium)
+            Text(hint, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+        }
+        Switch(checked = checked, onCheckedChange = onCheckedChange)
     }
 }
 

@@ -1,4 +1,4 @@
-import { CATEGORIES, category, normalizeItem, PLATFORMS, platformByName } from '../model.js';
+import { CATEGORIES, category, normalizeItem, PLATFORMS, platformByName, PROGRESS_STATUSES, statusLabel } from '../model.js';
 import { Items, Images } from '../db.js';
 import { prepareImage } from '../recognition/image.js';
 import { googleLinks } from '../lookup/google.js';
@@ -88,6 +88,16 @@ export async function renderEdit(root, id, { navigate, services }) {
             <label for="completion">Percentual de conclusão: <strong id="completion-value">${item.completionPercent ?? 0}%</strong></label>
             <input type="range" id="completion" name="completionPercent" min="0" max="100" step="5" value="${item.completionPercent ?? 0}">
           </div>
+          <div class="field" ${cat.completion ? '' : 'hidden'}>
+            <label for="status">Status</label>
+            <select class="input" id="status" name="progressStatus">${PROGRESS_STATUSES.map((s) => `<option value="${s.id}" ${(item.progressStatus || 'IN_PROGRESS') === s.id ? 'selected' : ''}>${s.icon} ${esc(statusLabel(s.id, cat.id))}</option>`).join('')}</select>
+          </div>
+          <div class="field" ${cat.platinum ? '' : 'hidden'}>
+            <label class="toggle"><input type="checkbox" name="platinum" ${item.platinum ? 'checked' : ''}> <span>🏆 Platinado<small>Todos os troféus/conquistas. Marca 100% e história finalizada.</small></span></label>
+          </div>
+          <div class="field" ${cat.backlog ? '' : 'hidden'}>
+            <label class="toggle"><input type="checkbox" name="backlog" ${item.backlog ? 'checked' : ''}> <span>📥 Backlog<small>Ainda não comecei a jogar.</small></span></label>
+          </div>
 
           <div class="field">
             <label for="creator">${esc(cat.creatorLabel)}</label>
@@ -149,6 +159,9 @@ export async function renderEdit(root, id, { navigate, services }) {
       title: f.title.value,
       platform,
       completionPercent: Number(f.completionPercent.value),
+      progressStatus: f.progressStatus.value,
+      platinum: f.platinum.checked,
+      backlog: f.backlog.checked,
       creator: f.creator.value,
       publisher: f.publisher.value,
       releaseYear: f.releaseYear.value,

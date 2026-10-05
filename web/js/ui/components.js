@@ -1,5 +1,5 @@
 // Small rendering helpers: HTML escaping, covers, progress bars, toasts, sheets.
-import { category, completionOf } from '../model.js';
+import { category, completionOf, progressSummary, PROGRESS_STATUSES, statusLabel } from '../model.js';
 import { Images } from '../db.js';
 
 export const esc = (v) => String(v ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
@@ -45,9 +45,24 @@ export async function hydrateCovers(root) {
 
 export function progressHtml(item, { label = true } = {}) {
   const pct = completionOf(item);
+  const status = item.progressStatus || 'IN_PROGRESS';
+  const cls = item.platinum ? 'platinum' : status === 'FINISHED' || pct >= 100 ? 'done' : status === 'PAUSED' ? 'paused' : status === 'ABANDONED' ? 'abandoned' : '';
   return `
-    <div class="progress ${pct >= 100 ? 'done' : ''}" role="progressbar" aria-valuenow="${pct}" aria-valuemin="0" aria-valuemax="100"><span style="width:${pct}%"></span></div>
-    ${label ? `<div class="progress-label">${pct >= 100 ? 'Concluído' : `${pct}% concluído`}</div>` : ''}`;
+    <div class="progress ${cls}" role="progressbar" aria-valuenow="${pct}" aria-valuemin="0" aria-valuemax="100"><span style="width:${pct}%"></span></div>
+    ${label ? `<div class="progress-label">${esc(progressSummary(item))}</div>` : ''}`;
+}
+
+export function backlogTag(item) {
+  return item.backlog ? '<span class="tag backlog">📥 Backlog</span>' : '';
+}
+
+/** Chips for the progress status (uses the category-specific label). */
+export function statusChips(selected, categoryId, { name = 'status', allLabel = null } = {}) {
+  return `
+    <div class="chips" data-chips="${name}">
+      ${allLabel ? `<button type="button" class="chip ${selected ? '' : 'selected'}" data-value="">${esc(allLabel)}</button>` : ''}
+      ${PROGRESS_STATUSES.map((s) => `<button type="button" class="chip ${selected === s.id ? 'selected' : ''}" data-value="${s.id}">${s.icon} ${esc(statusLabel(s.id, categoryId))}</button>`).join('')}
+    </div>`;
 }
 
 export function appBar({ title, subtitle = '', back = null, actions = '' }) {

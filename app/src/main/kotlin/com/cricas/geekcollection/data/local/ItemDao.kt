@@ -17,6 +17,12 @@ interface ItemDao {
         WHERE (:category IS NULL OR category = :category)
           AND (:favoritesOnly = 0 OR favorite = 1)
           AND (
+            :progress IS NULL OR
+            (:progress = 'BACKLOG' AND backlog = 1) OR
+            (:progress = 'PLATINUM' AND platinum = 1) OR
+            (:progress NOT IN ('BACKLOG', 'PLATINUM') AND progressStatus = :progress AND backlog = 0 AND completionPercent IS NOT NULL)
+          )
+          AND (
             :query = '' OR
             title LIKE '%' || :query || '%' OR
             platform LIKE '%' || :query || '%' OR
@@ -30,7 +36,7 @@ interface ItemDao {
           updatedAt DESC
         """
     )
-    fun observe(query: String, category: String?, favoritesOnly: Boolean, sort: String): Flow<List<ItemEntity>>
+    fun observe(query: String, category: String?, favoritesOnly: Boolean, progress: String?, sort: String): Flow<List<ItemEntity>>
 
     @Query("SELECT * FROM items WHERE id = :id")
     fun observeById(id: Long): Flow<ItemEntity?>
@@ -58,4 +64,7 @@ interface ItemDao {
 
     @Query("UPDATE items SET favorite = :favorite, updatedAt = :now WHERE id = :id")
     suspend fun updateFavorite(id: Long, favorite: Boolean, now: Long)
+
+    @Query("UPDATE items SET progressStatus = :status, platinum = :platinum, completionPercent = :percent, backlog = :backlog, updatedAt = :now WHERE id = :id")
+    suspend fun updateProgress(id: Long, status: String, platinum: Boolean, percent: Int?, backlog: Boolean, now: Long)
 }

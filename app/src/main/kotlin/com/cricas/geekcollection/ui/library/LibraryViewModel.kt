@@ -5,6 +5,7 @@ import androidx.lifecycle.viewModelScope
 import com.cricas.geekcollection.core.model.CollectionItem
 import com.cricas.geekcollection.core.model.ItemCategory
 import com.cricas.geekcollection.data.ItemRepository
+import com.cricas.geekcollection.data.ProgressFilter
 import com.cricas.geekcollection.data.SortOrder
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -18,6 +19,7 @@ data class LibraryFilter(
     val query: String = "",
     val category: ItemCategory? = null,
     val favoritesOnly: Boolean = false,
+    val progress: ProgressFilter? = null,
     val sort: SortOrder = SortOrder.RECENT,
 )
 
@@ -35,7 +37,7 @@ class LibraryViewModel(private val repository: ItemRepository) : ViewModel() {
     val filter: StateFlow<LibraryFilter> = _filter
 
     val uiState: StateFlow<LibraryUiState> = combine(
-        _filter.flatMapLatest { f -> repository.observeItems(f.query, f.category, f.favoritesOnly, f.sort) },
+        _filter.flatMapLatest { f -> repository.observeItems(f.query, f.category, f.favoritesOnly, f.progress, f.sort) },
         repository.observeCount(),
         repository.observeCompletedCount(),
     ) { items, total, completed ->
@@ -49,4 +51,6 @@ class LibraryViewModel(private val repository: ItemRepository) : ViewModel() {
     fun toggleFavorites() = _filter.value.let { _filter.value = it.copy(favoritesOnly = !it.favoritesOnly) }
 
     fun setSort(sort: SortOrder) = _filter.value.let { _filter.value = it.copy(sort = sort) }
+
+    fun setProgress(progress: ProgressFilter?) = _filter.value.let { _filter.value = it.copy(progress = progress) }
 }

@@ -187,3 +187,13 @@ input[type="range"] { width: 100%; accent-color: var(--primary); }
 code { background: var(--surface-2); padding: 1px 6px; border-radius: 6px; font-size: 0.85em; }
 ol.steps { padding-left: 20px; margin: 8px 0; }
 ol.steps li { margin-bottom: 6px; }
+
+/* Progress status variants */
+.progress.paused > span { background: #e0a800; }
+.progress.abandoned > span { background: var(--danger); }
+.progress.platinum > span { background: linear-gradient(90deg, #b9c6d3, #e8eef5, #b9c6d3); }
+.tag.backlog { background: var(--surface-2); }
+.tag.platinum { background: #e8eef5; color: #2a3a4a; }
+.toggle { display: flex; align-items: center; gap: 10px; padding: 10px 0; cursor: pointer; }
+.toggle input { width: 20px; height: 20px; accent-color: var(--primary); }
+.toggle small { color: var(--muted); display: block; }

@@ -3,9 +3,16 @@
 
 /** @typedef {'BOARD_GAME'|'VIDEO_GAME'|'CONSOLE'|'ACCESSORY'|'BOOK'|'COMIC'|'ACTION_FIGURE'|'COLLECTIBLE'|'OTHER'} CategoryId */
 
+/**
+ * Category rules:
+ * - platform: item can be tied to a gaming platform.
+ * - completion: item has a completion percentage + progress status.
+ * - backlog: item can be flagged as "backlog" (games in general).
+ * - platinum: item can be flagged as "platinado" (video games only).
+ */
 export const CATEGORIES = Object.freeze([
-  { id: 'BOARD_GAME', label: 'Jogo de tabuleiro', icon: '🎲', platform: false, completion: true, creatorLabel: 'Designer', searchHint: 'jogo de tabuleiro' },
-  { id: 'VIDEO_GAME', label: 'Game', icon: '🎮', platform: true, completion: true, creatorLabel: 'Desenvolvedora', searchHint: 'jogo' },
+  { id: 'BOARD_GAME', label: 'Jogo de tabuleiro', icon: '🎲', platform: false, completion: true, backlog: true, creatorLabel: 'Designer', searchHint: 'jogo de tabuleiro' },
+  { id: 'VIDEO_GAME', label: 'Game', icon: '🎮', platform: true, completion: true, backlog: true, platinum: true, creatorLabel: 'Desenvolvedora', searchHint: 'jogo' },
   { id: 'CONSOLE', label: 'Console', icon: '🕹️', platform: true, completion: false, creatorLabel: 'Fabricante', searchHint: 'console' },
   { id: 'ACCESSORY', label: 'Acessório', icon: '🎧', platform: true, completion: false, creatorLabel: 'Marca', searchHint: 'acessório' },
   { id: 'BOOK', label: 'Livro', icon: '📚', platform: false, completion: true, creatorLabel: 'Autor', searchHint: 'livro' },
@@ -16,6 +23,26 @@ export const CATEGORIES = Object.freeze([
 ]);
 
 const byId = new Map(CATEGORIES.map((c) => [c.id, c]));
+
+/** Progress status shown next to the completion bar (mutually exclusive). */
+export const PROGRESS_STATUSES = Object.freeze([
+  { id: 'IN_PROGRESS', label: 'Em andamento', icon: '▶️' },
+  { id: 'PAUSED', label: 'Pausado', icon: '⏸️' },
+  { id: 'ABANDONED', label: 'Abandonado', icon: '⛔' },
+  { id: 'FINISHED', label: 'Finalizado', icon: '🏁', gameLabel: 'História finalizada' },
+]);
+
+const statusById = new Map(PROGRESS_STATUSES.map((s) => [s.id, s]));
+
+export function progressStatus(id) {
+  return statusById.get(id) || statusById.get('IN_PROGRESS');
+}
+
+/** Label of a status for a given category ("História finalizada" for video games). */
+export function statusLabel(statusId, categoryId) {
+  const s = progressStatus(statusId);
+  return categoryId === 'VIDEO_GAME' && s.gameLabel ? s.gameLabel : s.label;
+}
 
 /** @param {string|undefined|null} id */
 export function category(id) {
@@ -93,9 +120,15 @@ export function normalizeItem(input) {
   const now = Date.now();
   const year = Number.parseInt(input.releaseYear, 10);
   let completion = null;
+  let status = null;
+  let platinum = false;
   if (cat.completion) {
     const n = Number.parseInt(input.completionPercent, 10);
     completion = Number.isFinite(n) ? Math.min(100, Math.max(0, n)) : 0;
+    status = progressStatus(input.progressStatus).id;
+    platinum = Boolean(cat.platinum && input.platinum);
+    // A platinum trophy means everything was done.
+    if (platinum) { completion = 100; status = 'FINISHED'; }
   }
   return {
     id: input.id || null,
@@ -103,6 +136,9 @@ export function normalizeItem(input) {
     category: cat.id,
     platform: cat.platform ? clean(input.platform) : null,
     completionPercent: completion,
+    progressStatus: status,
+    platinum,
+    backlog: Boolean(cat.backlog && input.backlog),
     description: clean(input.description),
     creator: clean(input.creator),
     publisher: clean(input.publisher),
@@ -121,4 +157,16 @@ export function normalizeItem(input) {
 
 export function completionOf(item) {
   return Math.min(100, Math.max(0, item.completionPercent ?? 0));
+}
+
+/** Short progress summary: "Platinado", "História finalizada · 100%", "60% · Pausado"... */
+export function progressSummary(item) {
+  const cat = category(item.category);
+  if (!cat.completion) return '';
+  if (item.platinum) return '🏆 Platinado';
+  const pct = completionOf(item);
+  const status = progressStatus(item.progressStatus).id;
+  if (status === 'FINISHED') return `🏁 ${statusLabel(status, cat.id)} · ${pct}%`;
+  if (status === 'IN_PROGRESS') return pct >= 100 ? 'Concluído' : `${pct}% concluído`;
+  return `${progressStatus(status).icon} ${statusLabel(status, cat.id)} · ${pct}%`;
 }

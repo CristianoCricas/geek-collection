@@ -1,6 +1,6 @@
-import { category } from '../model.js';
+import { category, normalizeItem } from '../model.js';
 import { Items } from '../db.js';
-import { appBar, coverHtml, esc, formatDate, hydrateCovers, progressHtml, toast } from './components.js';
+import { appBar, backlogTag, coverHtml, esc, formatDate, hydrateCovers, progressHtml, statusChips, toast } from './components.js';
 import { googleLinks } from '../lookup/google.js';
 
 export async function renderDetail(root, id, { navigate }) {
@@ -25,7 +25,7 @@ export async function renderDetail(root, id, { navigate }) {
         ${coverHtml(item, 'lg')}
         <div class="item-body">
           <h2 style="margin:0 0 8px;font-size:1.3rem">${esc(item.title)}</h2>
-          <span class="tag">${cat.icon} ${esc(cat.label)}</span>
+          <span class="tag">${cat.icon} ${esc(cat.label)}</span>${backlogTag(item)}${item.platinum ? '<span class="tag platinum">🏆 Platinado</span>' : ''}
           <dl class="kv">
             ${kv('Plataforma', item.platform)}
             ${kv('Ano de lançamento', item.releaseYear)}
@@ -37,8 +37,14 @@ export async function renderDetail(root, id, { navigate }) {
         <div class="card" style="margin-top:16px">
           <h3>Progresso</h3>
           ${progressHtml(item)}
-          <input type="range" id="completion" min="0" max="100" step="5" value="${item.completionPercent ?? 0}" aria-label="Percentual de conclusão">
-          ${(item.completionPercent ?? 0) < 100 ? '<button class="btn small secondary" data-action="complete">✓ Marcar como concluído</button>' : ''}
+          <input type="range" id="completion" min="0" max="100" step="5" value="${item.completionPercent ?? 0}" aria-label="Percentual de conclusão" ${item.platinum ? 'disabled' : ''}>
+          ${statusChips(item.progressStatus || 'IN_PROGRESS', cat.id)}
+          ${cat.platinum ? `<label class="toggle"><input type="checkbox" data-flag="platinum" ${item.platinum ? 'checked' : ''}> <span>🏆 Platinado<small>Todos os troféus/conquistas. Marca 100% e história finalizada.</small></span></label>` : ''}
+          ${cat.backlog ? `<label class="toggle"><input type="checkbox" data-flag="backlog" ${item.backlog ? 'checked' : ''}> <span>📥 Backlog<small>Ainda não comecei.</small></span></label>` : ''}
+          ${(item.completionPercent ?? 0) < 100 && !item.platinum ? '<button class="btn small secondary" data-action="complete">✓ Marcar como concluído</button>' : ''}
+        </div>` : cat.backlog ? `
+        <div class="card" style="margin-top:16px">
+          <label class="toggle"><input type="checkbox" data-flag="backlog" ${item.backlog ? 'checked' : ''}> <span>📥 Backlog</span></label>
         </div>` : ''}
 
       <hr class="divider">
@@ -76,6 +82,23 @@ export async function renderDetail(root, id, { navigate }) {
     });
   }
 
+  root.querySelector('[data-chips="status"]')?.addEventListener('click', async (e) => {
+    const chip = e.target.closest('.chip');
+    if (!chip) return;
+    const next = { ...item, progressStatus: chip.dataset.value, updatedAt: Date.now() };
+    if (chip.dataset.value !== 'FINISHED') next.platinum = false;
+    await Items.put(normalizeItem(next));
+    renderDetail(root, id, { navigate });
+  });
+
+  view.querySelectorAll('[data-flag]').forEach((box) => box.addEventListener('change', async () => {
+    const next = { ...item, [box.dataset.flag]: box.checked, updatedAt: Date.now() };
+    if (box.dataset.flag === 'backlog' && box.checked) { next.progressStatus = 'IN_PROGRESS'; next.platinum = false; }
+    if (box.dataset.flag === 'platinum' && box.checked) next.backlog = false;
+    await Items.put(normalizeItem(next));
+    renderDetail(root, id, { navigate });
+  }));
+
   view.addEventListener('click', async (e) => {
     const btn = e.target.closest('[data-action]');
     if (!btn) return;
@@ -84,7 +107,7 @@ export async function renderDetail(root, id, { navigate }) {
       await Items.put({ ...item, favorite: !item.favorite, updatedAt: Date.now() });
       renderDetail(root, id, { navigate });
     } else if (action === 'complete') {
-      await Items.put({ ...item, completionPercent: 100, updatedAt: Date.now() });
+      await Items.put(normalizeItem({ ...item, completionPercent: 100, progressStatus: 'FINISHED', backlog: false, updatedAt: Date.now() }));
       renderDetail(root, id, { navigate });
     } else if (action === 'delete') {
       if (window.confirm(`Excluir "${item.title}" da biblioteca? Esta ação não pode ser desfeita.`)) {

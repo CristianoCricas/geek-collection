@@ -11,6 +11,9 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.lazy.LazyRow
+import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
@@ -32,6 +35,8 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Slider
+import androidx.compose.material3.Switch
+import androidx.compose.material3.FilterChip
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
@@ -51,12 +56,14 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.cricas.geekcollection.R
 import com.cricas.geekcollection.core.model.CollectionItem
+import com.cricas.geekcollection.core.model.ProgressStatus
 import com.cricas.geekcollection.di.AppContainer
 import com.cricas.geekcollection.ui.components.CompletionBar
 import com.cricas.geekcollection.ui.components.ItemCover
 import com.cricas.geekcollection.ui.components.creatorLabelRes
 import com.cricas.geekcollection.ui.components.icon
 import com.cricas.geekcollection.ui.components.label
+import com.cricas.geekcollection.ui.components.labelRes
 import java.text.DateFormat
 import java.util.Date
 import kotlin.math.roundToInt
@@ -121,6 +128,10 @@ fun ItemDetailScreen(
                 item = s.item,
                 modifier = Modifier.padding(padding),
                 onCompletionChange = viewModel::setCompletion,
+                onStatusChange = { viewModel.setStatus(s.item, it) },
+                onPlatinumChange = { viewModel.setPlatinum(s.item, it) },
+                onBacklogChange = { viewModel.setBacklog(s.item, it) },
+                onMarkCompleted = { viewModel.markCompleted(s.item) },
             )
         }
     }
@@ -149,6 +160,10 @@ private fun DetailContent(
     item: CollectionItem,
     modifier: Modifier = Modifier,
     onCompletionChange: (Int) -> Unit,
+    onStatusChange: (ProgressStatus) -> Unit,
+    onPlatinumChange: (Boolean) -> Unit,
+    onBacklogChange: (Boolean) -> Unit,
+    onMarkCompleted: () -> Unit,
 ) {
     Column(
         modifier = modifier
@@ -168,6 +183,8 @@ private fun DetailContent(
                     label = { Text(item.category.label()) },
                     leadingIcon = { Icon(item.category.icon(), contentDescription = null, modifier = Modifier.size(18.dp)) },
                 )
+                if (item.backlog) AssistChip(onClick = {}, label = { Text("📥 " + stringResource(R.string.flag_backlog)) })
+                if (item.platinum) AssistChip(onClick = {}, label = { Text("🏆 " + stringResource(R.string.flag_platinum)) })
                 item.platform?.let { InfoLine(stringResource(R.string.field_platform), it) }
                 item.releaseYear?.let { InfoLine(stringResource(R.string.field_release_year), it.toString()) }
             }
@@ -175,7 +192,24 @@ private fun DetailContent(
 
         if (item.category.supportsCompletion) {
             Spacer(Modifier.height(20.dp))
-            CompletionSection(percent = item.completionOrZero, onCompletionChange = onCompletionChange)
+            CompletionSection(
+                item = item,
+                onCompletionChange = onCompletionChange,
+                onStatusChange = onStatusChange,
+                onPlatinumChange = onPlatinumChange,
+                onBacklogChange = onBacklogChange,
+                onMarkCompleted = onMarkCompleted,
+            )
+        } else if (item.category.supportsBacklog) {
+            Spacer(Modifier.height(20.dp))
+            Card(modifier = Modifier.fillMaxWidth()) {
+                FlagRow(
+                    title = "📥 " + stringResource(R.string.flag_backlog),
+                    hint = stringResource(R.string.flag_backlog_hint),
+                    checked = item.backlog,
+                    onCheckedChange = onBacklogChange,
+                )
+            }
         }
 
         Spacer(Modifier.height(20.dp))
@@ -217,7 +251,15 @@ private fun DetailContent(
 }
 
 @Composable
-private fun CompletionSection(percent: Int, onCompletionChange: (Int) -> Unit) {
+private fun CompletionSection(
+    item: CollectionItem,
+    onCompletionChange: (Int) -> Unit,
+    onStatusChange: (ProgressStatus) -> Unit,
+    onPlatinumChange: (Boolean) -> Unit,
+    onBacklogChange: (Boolean) -> Unit,
+    onMarkCompleted: () -> Unit,
+) {
+    val percent = item.completionOrZero
     var sliderValue by remember(percent) { mutableFloatStateOf(percent.toFloat()) }
     LaunchedEffect(percent) { sliderValue = percent.toFloat() }
 
@@ -225,17 +267,46 @@ private fun CompletionSection(percent: Int, onCompletionChange: (Int) -> Unit) {
         Column(modifier = Modifier.padding(16.dp)) {
             Text(stringResource(R.string.detail_completion_title), style = MaterialTheme.typography.titleSmall)
             Spacer(Modifier.height(8.dp))
-            CompletionBar(percent = sliderValue.roundToInt())
+            CompletionBar(item = item.copy(completionPercent = sliderValue.roundToInt()))
             Slider(
                 value = sliderValue,
                 onValueChange = { sliderValue = it },
                 onValueChangeFinished = { onCompletionChange(sliderValue.roundToInt()) },
                 valueRange = 0f..100f,
                 steps = 19,
+                enabled = !item.platinum,
             )
-            if (percent < 100) {
+            LazyRow(
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                contentPadding = PaddingValues(vertical = 4.dp),
+            ) {
+                items(ProgressStatus.entries) { status ->
+                    FilterChip(
+                        selected = item.progressStatus == status,
+                        onClick = { onStatusChange(status) },
+                        label = { Text(stringResource(status.labelRes(item.category))) },
+                    )
+                }
+            }
+            if (item.category.supportsPlatinum) {
+                FlagRow(
+                    title = "🏆 " + stringResource(R.string.flag_platinum),
+                    hint = stringResource(R.string.flag_platinum_hint),
+                    checked = item.platinum,
+                    onCheckedChange = onPlatinumChange,
+                )
+            }
+            if (item.category.supportsBacklog) {
+                FlagRow(
+                    title = "📥 " + stringResource(R.string.flag_backlog),
+                    hint = stringResource(R.string.flag_backlog_hint),
+                    checked = item.backlog,
+                    onCheckedChange = onBacklogChange,
+                )
+            }
+            if (percent < 100 && !item.platinum) {
                 Row(horizontalArrangement = Arrangement.End, modifier = Modifier.fillMaxWidth()) {
-                    TextButton(onClick = { onCompletionChange(100) }) {
+                    TextButton(onClick = onMarkCompleted) {
                         Icon(Icons.Filled.Check, contentDescription = null, modifier = Modifier.size(18.dp))
                         Spacer(Modifier.width(6.dp))
                         Text(stringResource(R.string.detail_mark_completed))
@@ -243,6 +314,20 @@ private fun CompletionSection(percent: Int, onCompletionChange: (Int) -> Unit) {
                 }
             }
         }
+    }
+}
+
+@Composable
+private fun FlagRow(title: String, hint: String, checked: Boolean, onCheckedChange: (Boolean) -> Unit) {
+    Row(
+        modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Column(modifier = Modifier.weight(1f)) {
+            Text(title, style = MaterialTheme.typography.bodyMedium)
+            Text(hint, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+        }
+        Switch(checked = checked, onCheckedChange = onCheckedChange)
     }
 }
 

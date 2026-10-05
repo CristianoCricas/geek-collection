@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import {
   classifyBarcode, detectPlatform, extractYear, guessTitle, isIsbn, rankTitles, suggestCategory, toIsbn13,
 } from '../js/recognition/heuristics.js';
-import { normalizeItem, normalizePlatform, category } from '../js/model.js';
+import { normalizeItem, normalizePlatform, category, progressSummary, statusLabel } from '../js/model.js';
 
 test('barcode classification', () => {
   assert.equal(isIsbn('9780140328721'), true);
@@ -63,4 +63,38 @@ test('item normalization follows category rules', () => {
   assert.equal(category('NOPE').id, 'OTHER');
   assert.equal(normalizePlatform('ps5'), 'PlayStation 5');
   assert.equal(normalizePlatform('Genesis'), 'Mega Drive');
+});
+
+test('progress status, platinum and backlog follow category rules', () => {
+  const game = normalizeItem({ title: 'Elden Ring', category: 'VIDEO_GAME', completionPercent: 40, progressStatus: 'PAUSED', backlog: true });
+  assert.equal(game.progressStatus, 'PAUSED');
+  assert.equal(game.backlog, true);
+  assert.equal(game.platinum, false);
+  assert.equal(progressSummary(game), '⏸️ Pausado · 40%');
+
+  const plat = normalizeItem({ title: 'Bloodborne', category: 'VIDEO_GAME', completionPercent: 70, platinum: true });
+  assert.equal(plat.platinum, true);
+  assert.equal(plat.completionPercent, 100);
+  assert.equal(plat.progressStatus, 'FINISHED');
+  assert.equal(progressSummary(plat), '🏆 Platinado');
+
+  const finished = normalizeItem({ title: 'GoW', category: 'VIDEO_GAME', completionPercent: 80, progressStatus: 'FINISHED' });
+  assert.equal(progressSummary(finished), '🏁 História finalizada · 80%');
+  assert.equal(statusLabel('FINISHED', 'BOOK'), 'Finalizado');
+
+  const board = normalizeItem({ title: 'Catan', category: 'BOARD_GAME', backlog: true, platinum: true, progressStatus: 'ABANDONED' });
+  assert.equal(board.backlog, true);
+  assert.equal(board.platinum, false, 'platinum is only for video games');
+  assert.equal(board.progressStatus, 'ABANDONED');
+
+  const book = normalizeItem({ title: 'Dune', category: 'BOOK', backlog: true, progressStatus: 'BOGUS' });
+  assert.equal(book.backlog, false, 'backlog is only for games');
+  assert.equal(book.progressStatus, 'IN_PROGRESS');
+  assert.equal(progressSummary(book), '0% concluído');
+
+  const figure = normalizeItem({ title: 'Iron Man', category: 'ACTION_FIGURE', progressStatus: 'PAUSED', backlog: true, platinum: true });
+  assert.equal(figure.progressStatus, null);
+  assert.equal(figure.backlog, false);
+  assert.equal(figure.platinum, false);
+  assert.equal(progressSummary(figure), '');
 });
