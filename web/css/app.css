@@ -197,3 +197,10 @@ ol.steps li { margin-bottom: 6px; }
 .toggle { display: flex; align-items: center; gap: 10px; padding: 10px 0; cursor: pointer; }
 .toggle input { width: 20px; height: 20px; accent-color: var(--primary); }
 .toggle small { color: var(--muted); display: block; }
+
+/* Version badge next to the home title */
+.version-badge {
+  display: inline-block; vertical-align: middle; margin-left: 6px;
+  font-size: 0.7rem; font-weight: 600; color: var(--primary);
+  background: var(--primary-soft); border-radius: 999px; padding: 2px 8px;
+}

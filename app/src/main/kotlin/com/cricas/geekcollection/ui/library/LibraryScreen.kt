@@ -1,6 +1,8 @@
 package com.cricas.geekcollection.ui.library
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -103,8 +105,24 @@ fun LibraryScreen(
         topBar = {
             TopAppBar(
                 title = {
+                    val versionName = remember {
+                        runCatching { context.packageManager.getPackageInfo(context.packageName, 0).versionName }.getOrNull() ?: ""
+                    }
                     Column {
-                        Text(stringResource(R.string.library_title))
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Text(stringResource(R.string.library_title))
+                            if (versionName.isNotEmpty()) {
+                                Spacer(Modifier.width(8.dp))
+                                Text(
+                                    text = "v$versionName",
+                                    style = MaterialTheme.typography.labelSmall,
+                                    color = MaterialTheme.colorScheme.primary,
+                                    modifier = Modifier
+                                        .background(MaterialTheme.colorScheme.primaryContainer, RoundedCornerShape(999.dp))
+                                        .padding(horizontal = 8.dp, vertical = 2.dp),
+                                )
+                            }
+                        }
                         if (state.loaded && state.totalCount > 0) {
                             Text(
                                 stringResource(R.string.library_stats, state.totalCount, state.completedCount),

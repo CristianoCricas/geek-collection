@@ -1,5 +1,6 @@
 import { CATEGORIES, category, completionOf } from '../model.js';
 import { Items } from '../db.js';
+import { VERSION } from '../version.js';
 import { appBar, backlogTag, coverHtml, esc, hydrateCovers, progressHtml, categoryChips } from './components.js';
 
 const state = { query: '', category: '', favorites: false, sort: 'recent', progress: '' };
@@ -60,6 +61,7 @@ export async function renderLibrary(root, { services } = {}) {
   root.innerHTML = `<div class="view">
     ${appBar({
       title: 'Minha biblioteca',
+      badge: `v${VERSION}`,
       subtitle: items.length ? `${items.length} itens · ${completed} concluídos` : '',
       actions: `
         <button class="icon-btn ${state.favorites ? 'active' : ''}" data-action="favorites" aria-label="Somente favoritos" title="Favoritos">${state.favorites ? '♥' : '♡'}</button>

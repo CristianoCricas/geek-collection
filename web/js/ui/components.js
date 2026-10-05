@@ -65,11 +65,11 @@ export function statusChips(selected, categoryId, { name = 'status', allLabel = 
     </div>`;
 }
 
-export function appBar({ title, subtitle = '', back = null, actions = '' }) {
+export function appBar({ title, subtitle = '', back = null, actions = '', badge = '' }) {
   return `
     <header class="appbar">
       ${back ? `<button class="icon-btn" data-nav="${esc(back)}" aria-label="Voltar">←</button>` : ''}
-      <h1>${esc(title)}${subtitle ? `<small>${esc(subtitle)}</small>` : ''}</h1>
+      <h1>${esc(title)}${badge ? ` <span class="version-badge" title="Versão do app">${esc(badge)}</span>` : ''}${subtitle ? `<small>${esc(subtitle)}</small>` : ''}</h1>
       ${actions}
     </header>`;
 }
