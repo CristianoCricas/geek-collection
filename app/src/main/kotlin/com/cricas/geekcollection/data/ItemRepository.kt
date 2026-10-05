@@ -52,11 +52,21 @@ class ItemRepository(private val dao: ItemDao, private val images: ImageStore) {
         val id = if (normalized.id == 0L) {
             dao.insert(ItemEntity.fromDomain(normalized.copy(createdAt = now, updatedAt = now)))
         } else {
-            val previousImage = dao.getById(normalized.id)?.localImagePath
+            val existing = dao.getById(normalized.id)
+            val previousImage = existing?.localImagePath
             if (previousImage != null && previousImage != normalized.localImagePath) {
                 images.delete(previousImage)
             }
-            dao.update(ItemEntity.fromDomain(normalized.copy(updatedAt = now)))
+            // Keep the stored identity: the edit form rebuilds the item without syncId/createdAt.
+            dao.update(
+                ItemEntity.fromDomain(
+                    normalized.copy(
+                        updatedAt = now,
+                        syncId = existing?.syncId ?: normalized.syncId,
+                        createdAt = existing?.createdAt ?: normalized.createdAt,
+                    )
+                )
+            )
             normalized.id
         }
         changed()

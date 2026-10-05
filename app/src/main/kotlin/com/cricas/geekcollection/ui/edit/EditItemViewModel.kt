@@ -10,6 +10,7 @@ import com.cricas.geekcollection.core.model.CollectionItem
 import com.cricas.geekcollection.core.model.ItemCategory
 import com.cricas.geekcollection.core.model.Platforms
 import com.cricas.geekcollection.core.model.ProgressStatus
+import com.cricas.geekcollection.core.model.newSyncId
 import com.cricas.geekcollection.data.ImageStore
 import com.cricas.geekcollection.data.ItemRepository
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -41,6 +42,7 @@ data class EditFormState(
     val externalSource: String? = null,
     val externalId: String? = null,
     val createdAt: Long = 0L,
+    val syncId: String? = null,
     val titleError: Boolean = false,
     val loading: Boolean = true,
     val saving: Boolean = false,
@@ -66,6 +68,7 @@ data class EditFormState(
         externalSource = externalSource,
         externalId = externalId,
         createdAt = if (createdAt == 0L) System.currentTimeMillis() else createdAt,
+        syncId = syncId ?: newSyncId(),
     ).normalized()
 
     companion object {
@@ -91,6 +94,7 @@ data class EditFormState(
             externalSource = item.externalSource,
             externalId = item.externalId,
             createdAt = item.createdAt,
+            syncId = item.syncId,
             loading = false,
         )
     }

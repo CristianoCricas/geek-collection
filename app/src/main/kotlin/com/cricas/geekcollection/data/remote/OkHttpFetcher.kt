@@ -50,7 +50,7 @@ class OkHttpFetcher(
 
     /** Extracts Google's `error.message` (e.g. EMAIL_EXISTS) from a JSON error body. */
     private fun errorMessage(body: String, code: Int): String {
-        val match = Regex("\"message\"\s*:\s*\"([^\"]+)\"").find(body)
+        val match = Regex("\"message\"\\s*:\\s*\"([^\"]+)\"").find(body)
         return match?.groupValues?.get(1) ?: "HTTP $code"
     }
 
