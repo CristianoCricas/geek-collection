@@ -71,7 +71,14 @@ jobs:
               echo "kind=none" >> "$GITHUB_OUTPUT"
               exit 0
             fi
-            if echo "$subjects" | grep -Eiq '^(feat|feature|melhoria|recurso)(\(.*\))?!?:|\[minor\]'; then kind=minor; else kind=patch; fi
+            if echo "$subjects" | grep -Eiq '^(feat|feature|melhoria|recurso)(\(.*\))?!?:|\[minor\]'; then
+              kind=minor
+            elif echo "$subjects" | grep -Eivq '^docs(\(.*\))?:'; then
+              kind=patch
+            else
+              echo "Only documentation commits since $last_tag; nothing to bump."
+              kind=none
+            fi
           fi
           echo "Commits considered:"; echo "${subjects:-<manual>}"
           echo "kind=$kind" >> "$GITHUB_OUTPUT"

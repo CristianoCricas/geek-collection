@@ -96,9 +96,12 @@ automaticamente a cada push no branch padrão, seguindo a regra:
 | --- | --- | --- |
 | **1º (MASTER)** | decisão manual | Actions → *Version* → *Run workflow* com `bump = major` |
 | **2º** | melhoria ou recurso novo | commit com prefixo `feat:` / `feature:` / `melhoria:` / `recurso:` (ou `[minor]` na mensagem) |
-| **3º** | correção de bug ou chore | qualquer outro commit (`fix:`, `chore:`, `docs:`, `refactor:`…) |
+| **3º** | correção de bug ou chore | qualquer outro commit (`fix:`, `chore:`, `refactor:`…) |
+| nenhum | só documentação | commits `docs:` não geram versão |
 
-O workflow analisa os commits desde a última tag `vX.Y.Z`, roda
+Cada entrega deve chegar em **um único commit por push**, já validada, para não gerar
+versões intermediárias (convenções completas em [`CLAUDE.md`](CLAUDE.md)). O workflow
+analisa os commits desde a última tag `vX.Y.Z`, roda
 `node scripts/bump-version.mjs <tipo>`, cria o commit `chore(release): bump version…`, a tag
 e dispara os builds do Android e do PWA com a nova versão. Para ajustar na mão:
 `node scripts/bump-version.mjs patch|minor|major`.
