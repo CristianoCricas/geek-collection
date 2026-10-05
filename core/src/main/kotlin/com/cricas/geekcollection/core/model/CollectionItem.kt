@@ -34,7 +34,15 @@ data class CollectionItem(
     val externalId: String? = null,
     val createdAt: Long = System.currentTimeMillis(),
     val updatedAt: Long = System.currentTimeMillis(),
+    /** Stable id shared across devices (cloud sync). */
+    val syncId: String = newSyncId(),
+    /** True when the item changed locally since the last successful push. */
+    val dirty: Boolean = true,
+    /** Tombstone date: the item was deleted and the deletion still has to reach the cloud. */
+    val deletedAt: Long? = null,
 ) {
+    val isDeleted: Boolean get() = deletedAt != null
+
     val completionOrZero: Int get() = completionPercent?.coerceIn(0, 100) ?: 0
 
     /** Removes values that do not make sense for the chosen category. */
@@ -60,3 +68,5 @@ data class CollectionItem(
         notes = notes?.trim()?.takeIf { it.isNotEmpty() },
     )
 }
+
+fun newSyncId(): String = java.util.UUID.randomUUID().toString().replace("-", "")

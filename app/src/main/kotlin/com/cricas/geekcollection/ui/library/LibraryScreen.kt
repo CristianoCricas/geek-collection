@@ -20,6 +20,8 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Clear
+import androidx.compose.material.icons.filled.Cloud
+import androidx.compose.material.icons.filled.CloudSync
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.FavoriteBorder
@@ -43,7 +45,11 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SmallFloatingActionButton
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
+import android.widget.Toast
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -80,6 +86,18 @@ fun LibraryScreen(
     val state by viewModel.uiState.collectAsStateWithLifecycle()
     val filter by viewModel.filter.collectAsStateWithLifecycle()
     var sortMenuOpen by remember { mutableStateOf(false) }
+    val context = LocalContext.current
+    val syncState by container.syncManager.state.collectAsStateWithLifecycle()
+    // Toast once per finished sync run (summary or error).
+    LaunchedEffect(syncState.lastSummary, syncState.lastError) {
+        val s = syncState.lastSummary
+        val e = syncState.lastError
+        when {
+            e != null -> Toast.makeText(context, context.getString(R.string.sync_failed, e), Toast.LENGTH_LONG).show()
+            s != null && (s.pushed > 0 || s.pulled > 0 || s.removed > 0) ->
+                Toast.makeText(context, context.getString(R.string.sync_result, s.pushed, s.pulled, s.removed), Toast.LENGTH_SHORT).show()
+        }
+    }
 
     Scaffold(
         topBar = {
@@ -97,6 +115,19 @@ fun LibraryScreen(
                     }
                 },
                 actions = {
+                    IconButton(
+                        onClick = {
+                            if (container.syncManager.canSync) container.syncManager.syncNow()
+                            else { Toast.makeText(context, R.string.sync_not_ready, Toast.LENGTH_SHORT).show(); onOpenSettings() }
+                        },
+                        enabled = !syncState.running,
+                    ) {
+                        if (syncState.running) CircularProgressIndicator(modifier = Modifier.size(20.dp), strokeWidth = 2.dp)
+                        else Icon(
+                            imageVector = if (container.syncManager.canSync) Icons.Filled.CloudSync else Icons.Filled.Cloud,
+                            contentDescription = stringResource(R.string.sync_action),
+                        )
+                    }
                     IconButton(onClick = viewModel::toggleFavorites) {
                         Icon(
                             imageVector = if (filter.favoritesOnly) Icons.Filled.Favorite else Icons.Filled.FavoriteBorder,

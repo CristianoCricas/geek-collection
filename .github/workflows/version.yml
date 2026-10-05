@@ -1,0 +1,91 @@
+name: Version
+
+# Bumps the app version automatically on every push to the default branch:
+#   feat/feature/melhoria/recurso commits → minor (new feature or improvement)
+#   anything else (fix, chore, docs, refactor…) → patch
+#   major is bumped by hand: run this workflow manually with bump = major.
+# The bump commit is tagged vX.Y.Z and the build/deploy workflows are dispatched.
+
+on:
+  push:
+    branches: ["**"]
+  workflow_dispatch:
+    inputs:
+      bump:
+        description: "Bump type (major is manual only)"
+        type: choice
+        options: [auto, major, minor, patch]
+        default: auto
+
+permissions:
+  contents: write
+  actions: write
+
+concurrency:
+  group: version-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  bump:
+    if: github.ref == format('refs/heads/{0}', github.event.repository.default_branch) && !startsWith(github.event.head_commit.message, 'chore(release)')
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          fetch-tags: true
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+
+      - name: Decide bump type
+        id: decide
+        env:
+          REQUESTED: ${{ github.event.inputs.bump || 'auto' }}
+        run: |
+          set -euo pipefail
+          last_tag="$(git describe --tags --abbrev=0 --match 'v*' 2>/dev/null || true)"
+          subjects=""
+          if [ "$REQUESTED" != "auto" ]; then
+            kind="$REQUESTED"
+          else
+            if [ -n "$last_tag" ]; then range="$last_tag..HEAD"; else range="HEAD"; fi
+            subjects="$(git log --format=%s "$range" | grep -v '^chore(release)' || true)"
+            if [ -z "$subjects" ]; then
+              echo "No commits since ${last_tag:-the beginning}; nothing to bump."
+              echo "kind=none" >> "$GITHUB_OUTPUT"
+              exit 0
+            fi
+            if echo "$subjects" | grep -Eiq '^(feat|feature|melhoria|recurso)(\(.*\))?!?:|\[minor\]'; then kind=minor; else kind=patch; fi
+          fi
+          echo "Commits considered:"; echo "${subjects:-<manual>}"
+          echo "kind=$kind" >> "$GITHUB_OUTPUT"
+
+      - name: Bump files
+        if: steps.decide.outputs.kind != 'none'
+        id: bump
+        run: |
+          set -euo pipefail
+          next="$(node scripts/bump-version.mjs "${{ steps.decide.outputs.kind }}")"
+          echo "next=$next" >> "$GITHUB_OUTPUT"
+          git diff --stat
+
+      - name: Commit, tag and push
+        if: steps.decide.outputs.kind != 'none'
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add VERSION web/js/version.js web/sw.js web/package.json
+          git commit -m "chore(release): bump version to ${{ steps.bump.outputs.next }} (${{ steps.decide.outputs.kind }})"
+          git tag "v${{ steps.bump.outputs.next }}"
+          git push origin HEAD:${{ github.ref_name }} --tags
+
+      - name: Build and deploy the new version
+        if: steps.decide.outputs.kind != 'none'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh workflow run android.yml --ref "${{ github.ref_name }}"
+          gh workflow run pages.yml --ref "${{ github.ref_name }}"

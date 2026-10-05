@@ -39,3 +39,11 @@ export async function prepareImage(file) {
   if (bitmap.close) bitmap.close();
   return { analysis, cover };
 }
+
+/** Small JPEG (max 400px) as a data URL, used to carry the photo through the cloud. */
+export async function makeThumb(blob, maxSide = 400, quality = 0.7) {
+  const bitmap = await loadBitmap(blob);
+  const canvas = toCanvas(bitmap, maxSide);
+  if (bitmap.close) bitmap.close();
+  return canvas.toDataURL('image/jpeg', quality);
+}

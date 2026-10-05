@@ -150,9 +150,21 @@ export function normalizeItem(input) {
     favorite: Boolean(input.favorite),
     sourceUrl: clean(input.sourceUrl),
     sourceName: clean(input.sourceName),
+    externalId: clean(input.externalId),
+    // Sync bookkeeping: stable cross-device id, "needs push" flag and tombstone date.
+    syncId: clean(input.syncId) || newSyncId(),
+    dirty: input.dirty === undefined ? true : Boolean(input.dirty),
+    deletedAt: input.deletedAt || null,
     createdAt: input.createdAt || now,
-    updatedAt: now,
+    updatedAt: input.updatedAt && input.keepUpdatedAt ? input.updatedAt : now,
   };
+}
+
+export function newSyncId() {
+  if (globalThis.crypto && typeof globalThis.crypto.randomUUID === 'function') return globalThis.crypto.randomUUID().replace(/-/g, '');
+  let out = '';
+  for (let i = 0; i < 32; i++) out += Math.floor(Math.random() * 16).toString(16);
+  return out;
 }
 
 export function completionOf(item) {

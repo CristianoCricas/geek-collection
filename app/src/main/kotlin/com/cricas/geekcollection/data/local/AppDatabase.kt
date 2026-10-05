@@ -7,7 +7,7 @@ import androidx.room.RoomDatabase
 import androidx.room.migration.Migration
 import androidx.sqlite.db.SupportSQLiteDatabase
 
-@Database(entities = [ItemEntity::class], version = 2, exportSchema = true)
+@Database(entities = [ItemEntity::class], version = 3, exportSchema = true)
 abstract class AppDatabase : RoomDatabase() {
 
     abstract fun itemDao(): ItemDao
@@ -22,9 +22,20 @@ abstract class AppDatabase : RoomDatabase() {
             }
         }
 
+        /** v3: cloud sync bookkeeping (stable id, dirty flag, tombstones). */
+        val MIGRATION_2_3 = object : Migration(2, 3) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL("ALTER TABLE items ADD COLUMN syncId TEXT NOT NULL DEFAULT ''")
+                db.execSQL("ALTER TABLE items ADD COLUMN dirty INTEGER NOT NULL DEFAULT 1")
+                db.execSQL("ALTER TABLE items ADD COLUMN deletedAt INTEGER")
+                db.execSQL("UPDATE items SET syncId = lower(hex(randomblob(16))) WHERE syncId = ''")
+                db.execSQL("CREATE UNIQUE INDEX IF NOT EXISTS index_items_syncId ON items (syncId)")
+            }
+        }
+
         fun build(context: Context): AppDatabase =
             Room.databaseBuilder(context, AppDatabase::class.java, "geek_collection.db")
-                .addMigrations(MIGRATION_1_2)
+                .addMigrations(MIGRATION_1_2, MIGRATION_2_3)
                 .fallbackToDestructiveMigrationOnDowngrade()
                 .build()
     }

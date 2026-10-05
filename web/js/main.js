@@ -1,6 +1,10 @@
 // Entry point: wires services, the hash router and the service worker.
-import { CATEGORIES } from './model.js';
-import { Settings } from './db.js';
+import { CATEGORIES, normalizeItem } from './model.js';
+import { Settings, createSyncStore, dataUrlToBlob } from './db.js';
+import { makeThumb } from './recognition/image.js';
+import { FirebaseClient } from './sync/firebase.js';
+import { runSync } from './sync/engine.js';
+import { VERSION } from './version.js';
 import { GoogleSearch } from './lookup/google.js';
 import { GoogleBooks } from './lookup/books.js';
 import { Wikipedia } from './lookup/wikipedia.js';
@@ -12,13 +16,60 @@ import { renderScan } from './ui/scan.js';
 import { renderSettings } from './ui/settings.js';
 import { toast } from './ui/components.js';
 
-export const VERSION = '1.0.0';
-
 // components.js reads the category list through this global to avoid a circular import.
 window.__model = { CATEGORIES };
 
-let settingsCache = { googleApiKey: '', googleCx: '', wikiLang: 'pt', ocrLangs: 'por+eng' };
+let settingsCache = { googleApiKey: '', googleCx: '', wikiLang: 'pt', ocrLangs: 'por+eng', firebaseProjectId: '', firebaseApiKey: '', autoSync: true };
 const settings = () => settingsCache;
+
+const firebase = new FirebaseClient(settings, {
+  load: () => Settings.getValue('firebaseAuth'),
+  save: (auth) => Settings.setValue('firebaseAuth', auth),
+});
+const syncStore = createSyncStore({ makeThumb, thumbToBlob: dataUrlToBlob, normalize: normalizeItem });
+
+/** Cloud sync facade used by the screens. */
+const sync = {
+  firebase,
+  running: false,
+  listeners: new Set(),
+  onChange(fn) { this.listeners.add(fn); return () => this.listeners.delete(fn); },
+  async canSync() { return firebase.isConfigured && (await firebase.isSignedIn()); },
+  async lastSyncAt() { return Settings.getValue('lastSyncAt'); },
+  /** Runs a sync; resolves with the summary or throws. Concurrent calls are coalesced. */
+  async run({ silent = false, onStatus } = {}) {
+    if (this.running) return null;
+    if (!(await this.canSync())) return null;
+    if (!navigator.onLine) { if (!silent) toast('Sem conexão. A sincronização será feita quando houver internet.'); return null; }
+    this.running = true;
+    this.listeners.forEach((fn) => fn({ running: true }));
+    try {
+      const summary = await runSync({ firebase, store: syncStore, onStatus: onStatus || (() => {}) });
+      await Settings.setValue('lastSyncAt', Date.now());
+      if (!silent) {
+        const parts = [];
+        if (summary.pushed) parts.push(`${summary.pushed} enviado(s)`);
+        if (summary.pulled) parts.push(`${summary.pulled} recebido(s)`);
+        if (summary.removed) parts.push(`${summary.removed} removido(s)`);
+        toast(parts.length ? `Sincronizado: ${parts.join(', ')}` : 'Tudo sincronizado');
+      }
+      this.listeners.forEach((fn) => fn({ running: false, summary }));
+      return summary;
+    } catch (err) {
+      console.warn('sync', err);
+      if (!silent) toast(`Falha ao sincronizar: ${err.message || err}`);
+      this.listeners.forEach((fn) => fn({ running: false, error: err }));
+      throw err;
+    } finally {
+      this.running = false;
+    }
+  },
+  /** Debounced background sync after local edits. */
+  schedule(delay = 4000) {
+    clearTimeout(this._timer);
+    this._timer = setTimeout(() => { if (settingsCache.autoSync) this.run({ silent: true }).catch(() => {}); }, delay);
+  },
+};
 
 const services = {
   lookup: new LookupService({
@@ -26,9 +77,8 @@ const services = {
     books: new GoogleBooks(settings),
     wikipedia: new Wikipedia(settings),
   }),
+  sync,
 };
-
-const app = document.getElementById('app');
 
 function navigate(hash) {
   if (location.hash === hash) route();
@@ -40,18 +90,21 @@ async function route() {
   const [path, query = ''] = raw.split('?');
   const params = new URLSearchParams(query);
   const parts = path.split('/').filter(Boolean);
-  const fresh = app.cloneNode(false);
-  app.replaceWith(fresh);
-  const root = document.getElementById('app');
+  // Give every screen a fresh root element so listeners from the previous
+  // screen (including its sync listener) are dropped with it.
+  const current = document.getElementById('app');
+  const fresh = current.cloneNode(false);
+  current.replaceWith(fresh);
+  const root = fresh;
   window.scrollTo(0, 0);
 
   try {
-    if (parts.length === 0) return await renderLibrary(root);
-    if (parts[0] === 'item' && parts[1]) return await renderDetail(root, Number(parts[1]), { navigate });
+    if (parts.length === 0) return await renderLibrary(root, { services });
+    if (parts[0] === 'item' && parts[1]) return await renderDetail(root, Number(parts[1]), { navigate, services });
     if (parts[0] === 'edit') return await renderEdit(root, parts[1] ? Number(parts[1]) : null, { navigate, services, settings });
     if (parts[0] === 'scan') return await renderScan(root, { navigate, services, settings, shared: params.get('shared') === '1' });
     if (parts[0] === 'settings') {
-      return await renderSettings(root, { navigate, version: VERSION, onSettingsChanged: (s) => { settingsCache = s; } });
+      return await renderSettings(root, { navigate, services, version: VERSION, onSettingsChanged: (s) => { settingsCache = s; } });
     }
     navigate('#/');
   } catch (err) {
@@ -77,6 +130,12 @@ window.addEventListener('hashchange', route);
 async function start() {
   settingsCache = await Settings.load();
   await route();
+  // Sync on launch and whenever the app comes back online.
+  if (settingsCache.autoSync) sync.run({ silent: true }).catch(() => {});
+  window.addEventListener('online', () => { if (settingsCache.autoSync) sync.run({ silent: true }).catch(() => {}); });
+  document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState === 'visible' && settingsCache.autoSync) sync.run({ silent: true }).catch(() => {});
+  });
   if ('serviceWorker' in navigator && location.protocol !== 'file:') {
     try {
       const reg = await navigator.serviceWorker.register('./sw.js');

@@ -5,6 +5,13 @@ plugins {
     alias(libs.plugins.ksp)
 }
 
+// Single source of truth for the app version: the VERSION file at the repo root
+// (bumped by scripts/bump-version.mjs and the "Version" GitHub workflow).
+val appVersionName: String = rootProject.file("VERSION").readText().trim()
+val appVersionCode: Int = appVersionName.split(".").map { it.toInt() }.let { (major, minor, patch) ->
+    major * 1_000_000 + minor * 1_000 + patch
+}
+
 android {
     namespace = "com.cricas.geekcollection"
     compileSdk = 35
@@ -13,8 +20,8 @@ android {
         applicationId = "com.cricas.geekcollection"
         minSdk = 26
         targetSdk = 35
-        versionCode = 1
-        versionName = "1.0.0"
+        versionName = appVersionName
+        versionCode = appVersionCode
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         vectorDrawables {

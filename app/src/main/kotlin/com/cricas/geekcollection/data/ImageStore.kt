@@ -29,6 +29,33 @@ class ImageStore(private val context: Context) {
         target.absolutePath
     }
 
+    /** Writes raw image bytes (e.g. a thumbnail received from the cloud) into permanent storage. */
+    suspend fun saveBytes(bytes: ByteArray): String = withContext(Dispatchers.IO) {
+        val target = File(coversDir, "${UUID.randomUUID()}.jpg")
+        target.writeBytes(bytes)
+        target.absolutePath
+    }
+
+    /** Small JPEG (max [maxSide] px) of a stored picture as a base64 data URL, or null. */
+    suspend fun thumbnailDataUrl(path: String, maxSide: Int = 400, quality: Int = 70): String? = withContext(Dispatchers.IO) {
+        val file = File(path)
+        if (!file.exists()) return@withContext null
+        val bounds = android.graphics.BitmapFactory.Options().apply { inJustDecodeBounds = true }
+        android.graphics.BitmapFactory.decodeFile(path, bounds)
+        if (bounds.outWidth <= 0 || bounds.outHeight <= 0) return@withContext null
+        var sample = 1
+        while (maxOf(bounds.outWidth, bounds.outHeight) / (sample * 2) >= maxSide) sample *= 2
+        val bitmap = android.graphics.BitmapFactory.decodeFile(path, android.graphics.BitmapFactory.Options().apply { inSampleSize = sample })
+            ?: return@withContext null
+        val scale = minOf(1f, maxSide.toFloat() / maxOf(bitmap.width, bitmap.height))
+        val scaled = if (scale < 1f) android.graphics.Bitmap.createScaledBitmap(bitmap, (bitmap.width * scale).toInt().coerceAtLeast(1), (bitmap.height * scale).toInt().coerceAtLeast(1), true) else bitmap
+        val out = java.io.ByteArrayOutputStream()
+        scaled.compress(android.graphics.Bitmap.CompressFormat.JPEG, quality, out)
+        if (scaled !== bitmap) scaled.recycle()
+        bitmap.recycle()
+        "data:image/jpeg;base64," + android.util.Base64.encodeToString(out.toByteArray(), android.util.Base64.NO_WRAP)
+    }
+
     suspend fun delete(path: String) = withContext(Dispatchers.IO) {
         val file = File(path)
         if (file.parentFile == coversDir && file.exists()) file.delete()

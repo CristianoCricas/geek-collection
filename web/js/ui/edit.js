@@ -246,6 +246,7 @@ export async function renderEdit(root, id, { navigate, services }) {
       else await Images.remove(savedId);
     }
     toast('Item salvo');
+    services.sync && services.sync.schedule();
     navigate(`#/item/${savedId}`);
   }
 

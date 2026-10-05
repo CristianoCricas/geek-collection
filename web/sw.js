@@ -1,13 +1,14 @@
 /* Service worker: offline app shell, runtime cache for the vendored
  * recognition engines, and the Web Share Target handler. */
-const VERSION = 'v2';
+const VERSION = '0.1.0';
 const SHELL_CACHE = `geek-shell-${VERSION}`;
 const RUNTIME_CACHE = `geek-runtime-${VERSION}`;
 const SHARE_CACHE = 'geek-share';
 
 const SHELL = [
   './', './index.html', './manifest.webmanifest', './css/app.css',
-  './js/main.js', './js/db.js', './js/model.js',
+  './js/main.js', './js/db.js', './js/model.js', './js/version.js',
+  './js/sync/firebase.js', './js/sync/engine.js',
   './js/recognition/heuristics.js', './js/recognition/image.js', './js/recognition/barcode.js',
   './js/recognition/ocr.js', './js/recognition/recognizer.js',
   './js/lookup/http.js', './js/lookup/google.js', './js/lookup/books.js', './js/lookup/wikipedia.js', './js/lookup/service.js',

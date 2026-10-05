@@ -133,6 +133,29 @@
     <string name="settings_about_title">Sobre</string>
     <string name="settings_about_body">Geek Collection v%1$s. O reconhecimento de imagem roda no aparelho com ML Kit (código de barras, texto e rótulos). Nenhuma foto é enviada para a internet, apenas o texto reconhecido.</string>
     <string name="settings_saved">Configurações salvas</string>
+    <string name="sync_title">Sincronização na nuvem</string>
+    <string name="sync_body">Mantém a biblioteca igual em todos os seus aparelhos (app Android e PWA) usando o Firebase do Google, no plano gratuito. Só o que foi criado ou alterado desde a última sincronização é enviado ou recebido.</string>
+    <string name="sync_setup">Como configurar (uma vez): 1) Crie um projeto em console.firebase.google.com. 2) Em Authentication → Sign-in method, ative E-mail/senha. 3) Crie o Firestore Database e cole as regras indicadas no README (users/{uid} só para o próprio usuário). 4) Em Configurações do projeto, copie o ID do projeto e a chave de API da Web.</string>
+    <string name="sync_project_id">ID do projeto Firebase</string>
+    <string name="sync_api_key">Chave de API da Web</string>
+    <string name="sync_auto">Sincronizar automaticamente</string>
+    <string name="sync_auto_hint">Ao abrir o app e alguns segundos após cada alteração.</string>
+    <string name="sync_email">E-mail</string>
+    <string name="sync_password">Senha (mínimo 6 caracteres)</string>
+    <string name="sync_sign_in">Entrar</string>
+    <string name="sync_sign_up">Criar conta</string>
+    <string name="sync_sign_out">Sair</string>
+    <string name="sync_now">Sincronizar agora</string>
+    <string name="sync_signed_in_as">Conectado como %1$s</string>
+    <string name="sync_last">Última sincronização: %1$s</string>
+    <string name="sync_never">Ainda não sincronizado</string>
+    <string name="sync_fill_config">Preencha e salve o projeto Firebase para habilitar o login.</string>
+    <string name="sync_same_credentials">Use o mesmo e-mail e senha em todos os aparelhos.</string>
+    <string name="sync_result">Sincronizado: %1$d enviado(s), %2$d recebido(s), %3$d removido(s)</string>
+    <string name="sync_up_to_date">Tudo sincronizado</string>
+    <string name="sync_failed">Falha ao sincronizar: %1$s</string>
+    <string name="sync_not_ready">Configure a sincronização nas configurações</string>
+    <string name="sync_action">Sincronizar com a nuvem</string>
 
     <!-- Detail -->
     <string name="detail_not_found">Item não encontrado</string>

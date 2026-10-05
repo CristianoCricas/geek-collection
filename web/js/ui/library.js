@@ -52,7 +52,7 @@ function itemCard(it) {
     </article>`;
 }
 
-export async function renderLibrary(root) {
+export async function renderLibrary(root, { services } = {}) {
   const items = await Items.all();
   const list = filterItems(items);
   const completed = items.filter((i) => completionOf(i) >= 100 && category(i.category).completion).length;
@@ -64,6 +64,7 @@ export async function renderLibrary(root) {
       actions: `
         <button class="icon-btn ${state.favorites ? 'active' : ''}" data-action="favorites" aria-label="Somente favoritos" title="Favoritos">${state.favorites ? '♥' : '♡'}</button>
         <button class="icon-btn" data-action="sort" aria-label="Ordenar (${SORTS[state.sort]})" title="Ordenar: ${SORTS[state.sort]}">⇅</button>
+        ${services && services.sync ? `<button class="icon-btn" data-action="sync" aria-label="Sincronizar" title="Sincronizar com a nuvem" ${services.sync.running ? 'disabled' : ''}>${services.sync.running ? '⏳' : '☁️'}</button>` : ''}
         <button class="icon-btn" data-nav="#/settings" aria-label="Configurações" title="Configurações">⚙️</button>`,
     })}
     <main>
@@ -96,7 +97,7 @@ export async function renderLibrary(root) {
     clearTimeout(timer);
     timer = setTimeout(() => {
       const pos = q.selectionStart;
-      renderLibrary(root).then(() => {
+      renderLibrary(root, { services }).then(() => {
         const nq = root.querySelector('#q');
         nq.focus();
         nq.setSelectionRange(pos, pos);
@@ -107,13 +108,13 @@ export async function renderLibrary(root) {
     const chip = e.target.closest('.chip');
     if (!chip) return;
     state.category = chip.dataset.value === state.category ? '' : chip.dataset.value;
-    renderLibrary(root);
+    renderLibrary(root, { services });
   });
   root.querySelector('[data-chips="progress"]').addEventListener('click', (e) => {
     const chip = e.target.closest('.chip');
     if (!chip) return;
     state.progress = chip.dataset.value;
-    renderLibrary(root);
+    renderLibrary(root, { services });
   });
   view.addEventListener('click', (e) => {
     const btn = e.target.closest('[data-action]');
@@ -124,8 +125,24 @@ export async function renderLibrary(root) {
       const keys = Object.keys(SORTS);
       state.sort = keys[(keys.indexOf(state.sort) + 1) % keys.length];
     }
-    renderLibrary(root);
+    if (btn.dataset.action === 'sync') {
+      services.sync.canSync().then((ok) => {
+        if (!ok) { window.location.hash = '#/settings'; return; }
+        services.sync.run().catch(() => {});
+      });
+      return;
+    }
+    renderLibrary(root, { services });
   });
+
+  if (services && services.sync && !root._syncHooked) {
+    root._syncHooked = true;
+    const off = services.sync.onChange(({ running, summary }) => {
+      if (!document.body.contains(root)) { off(); return; }
+      if (running || (summary && (summary.pulled || summary.removed))) renderLibrary(root, { services });
+      else { const b = root.querySelector('[data-action="sync"]'); if (b) { b.disabled = false; b.textContent = '☁️'; } }
+    });
+  }
 }
 
 export { CATEGORIES };

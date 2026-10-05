@@ -3,7 +3,8 @@ import { Items } from '../db.js';
 import { appBar, backlogTag, coverHtml, esc, formatDate, hydrateCovers, progressHtml, statusChips, toast } from './components.js';
 import { googleLinks } from '../lookup/google.js';
 
-export async function renderDetail(root, id, { navigate }) {
+export async function renderDetail(root, id, { navigate, services }) {
+  const touched = () => services && services.sync && services.sync.schedule();
   const item = await Items.get(id);
   if (!item) {
     root.innerHTML = `${appBar({ title: 'Item', back: '#/' })}<main><p class="empty">Item não encontrado.</p></main>`;
@@ -78,7 +79,8 @@ export async function renderDetail(root, id, { navigate }) {
     });
     range.addEventListener('change', async () => {
       await Items.put({ ...item, completionPercent: Number(range.value), updatedAt: Date.now() });
-      renderDetail(root, id, { navigate });
+      touched();
+      renderDetail(root, id, { navigate, services });
     });
   }
 
@@ -88,7 +90,8 @@ export async function renderDetail(root, id, { navigate }) {
     const next = { ...item, progressStatus: chip.dataset.value, updatedAt: Date.now() };
     if (chip.dataset.value !== 'FINISHED') next.platinum = false;
     await Items.put(normalizeItem(next));
-    renderDetail(root, id, { navigate });
+    touched();
+    renderDetail(root, id, { navigate, services });
   });
 
   view.querySelectorAll('[data-flag]').forEach((box) => box.addEventListener('change', async () => {
@@ -96,7 +99,8 @@ export async function renderDetail(root, id, { navigate }) {
     if (box.dataset.flag === 'backlog' && box.checked) { next.progressStatus = 'IN_PROGRESS'; next.platinum = false; }
     if (box.dataset.flag === 'platinum' && box.checked) next.backlog = false;
     await Items.put(normalizeItem(next));
-    renderDetail(root, id, { navigate });
+    touched();
+    renderDetail(root, id, { navigate, services });
   }));
 
   view.addEventListener('click', async (e) => {
@@ -105,13 +109,16 @@ export async function renderDetail(root, id, { navigate }) {
     const action = btn.dataset.action;
     if (action === 'favorite') {
       await Items.put({ ...item, favorite: !item.favorite, updatedAt: Date.now() });
-      renderDetail(root, id, { navigate });
+      touched();
+      renderDetail(root, id, { navigate, services });
     } else if (action === 'complete') {
       await Items.put(normalizeItem({ ...item, completionPercent: 100, progressStatus: 'FINISHED', backlog: false, updatedAt: Date.now() }));
-      renderDetail(root, id, { navigate });
+      touched();
+      renderDetail(root, id, { navigate, services });
     } else if (action === 'delete') {
       if (window.confirm(`Excluir "${item.title}" da biblioteca? Esta ação não pode ser desfeita.`)) {
         await Items.remove(id);
+        touched();
         toast('Item excluído');
         navigate('#/');
       }

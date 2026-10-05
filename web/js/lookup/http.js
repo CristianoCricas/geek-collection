@@ -23,6 +23,33 @@ export async function fetchJson(url, init) {
   return res.json();
 }
 
+export async function postJson(url, body, init = {}) {
+  const isForm = typeof body === 'string';
+  const res = await fetch(url, {
+    method: 'POST',
+    ...init,
+    headers: {
+      Accept: 'application/json',
+      'Content-Type': isForm ? 'application/x-www-form-urlencoded' : 'application/json',
+      ...(init.headers || {}),
+    },
+    body: isForm ? body : JSON.stringify(body),
+  });
+  if (!res.ok) {
+    let detail = '';
+    try {
+      const data = await res.json();
+      detail = data?.error?.message || (Array.isArray(data) && data[0]?.error?.message) || '';
+    } catch { /* ignore */ }
+    throw new HttpError(res.status, detail || `HTTP ${res.status}`, url);
+  }
+  return res.json();
+}
+
+export async function patchJson(url, body, init = {}) {
+  return postJson(url, body, { ...init, method: 'PATCH' });
+}
+
 export const q = (params) =>
   Object.entries(params)
     .filter(([, v]) => v !== undefined && v !== null && v !== '')

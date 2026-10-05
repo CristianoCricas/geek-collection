@@ -10,7 +10,7 @@ import com.cricas.geekcollection.core.model.ProgressStatus
 
 @Entity(
     tableName = "items",
-    indices = [Index("category"), Index("title"), Index("updatedAt")],
+    indices = [Index("category"), Index("title"), Index("updatedAt"), Index(value = ["syncId"], unique = true)],
 )
 data class ItemEntity(
     @PrimaryKey(autoGenerate = true) val id: Long = 0L,
@@ -34,6 +34,9 @@ data class ItemEntity(
     val externalId: String? = null,
     val createdAt: Long,
     val updatedAt: Long,
+    @ColumnInfo(defaultValue = "") val syncId: String = "",
+    @ColumnInfo(defaultValue = "1") val dirty: Boolean = true,
+    val deletedAt: Long? = null,
 ) {
     fun toDomain(): CollectionItem = CollectionItem(
         id = id,
@@ -57,6 +60,9 @@ data class ItemEntity(
         externalId = externalId,
         createdAt = createdAt,
         updatedAt = updatedAt,
+        syncId = syncId,
+        dirty = dirty,
+        deletedAt = deletedAt,
     )
 
     companion object {
@@ -82,6 +88,9 @@ data class ItemEntity(
             externalId = item.externalId,
             createdAt = item.createdAt,
             updatedAt = item.updatedAt,
+            syncId = item.syncId,
+            dirty = item.dirty,
+            deletedAt = item.deletedAt,
         )
     }
 }

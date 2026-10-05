@@ -15,7 +15,12 @@ import com.cricas.geekcollection.data.ItemRepository
 import com.cricas.geekcollection.data.local.AppDatabase
 import com.cricas.geekcollection.data.remote.OkHttpFetcher
 import com.cricas.geekcollection.data.settings.SettingsRepository
+import com.cricas.geekcollection.core.sync.FirebaseClient
+import com.cricas.geekcollection.core.sync.FirebaseConfig
+import com.cricas.geekcollection.core.sync.SyncEngine
 import com.cricas.geekcollection.recognition.MlKitImageRecognizer
+import com.cricas.geekcollection.sync.RoomSyncStore
+import com.cricas.geekcollection.sync.SyncManager
 
 /**
  * Hand-rolled dependency container. Small enough that a DI framework would
@@ -28,7 +33,20 @@ class AppContainer(context: Context) {
     val settings: SettingsRepository by lazy { SettingsRepository(appContext) }
     val imageStore: ImageStore by lazy { ImageStore(appContext) }
     private val database: AppDatabase by lazy { AppDatabase.build(appContext) }
-    val repository: ItemRepository by lazy { ItemRepository(database.itemDao(), imageStore) }
+    val repository: ItemRepository by lazy {
+        ItemRepository(database.itemDao(), imageStore).also { repo ->
+            repo.onLocalChange = { syncManager.scheduleAfterChange() }
+        }
+    }
+
+    val syncManager: SyncManager by lazy {
+        val firebase = FirebaseClient(
+            http = httpFetcher,
+            configProvider = { settings.current.let { FirebaseConfig(it.firebaseProjectId, it.firebaseApiKey) } },
+            authStore = settings.authStore,
+        )
+        SyncManager(firebase, SyncEngine(firebase, RoomSyncStore(database.itemDao(), imageStore, settings)), settings)
+    }
     val recognizer: MlKitImageRecognizer by lazy { MlKitImageRecognizer(appContext) }
 
     val rawgProvider: RawgProvider by lazy {

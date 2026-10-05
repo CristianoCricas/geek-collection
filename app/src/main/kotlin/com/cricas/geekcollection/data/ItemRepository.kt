@@ -22,6 +22,11 @@ enum class ProgressFilter(val key: String) {
 
 class ItemRepository(private val dao: ItemDao, private val images: ImageStore) {
 
+    /** Called after every local write (used to schedule a background sync). */
+    var onLocalChange: (() -> Unit)? = null
+
+    private fun changed() { onLocalChange?.invoke() }
+
     fun observeItems(
         query: String,
         category: ItemCategory?,
@@ -43,8 +48,8 @@ class ItemRepository(private val dao: ItemDao, private val images: ImageStore) {
     /** Inserts or updates, returning the item id. */
     suspend fun save(item: CollectionItem): Long {
         val now = System.currentTimeMillis()
-        val normalized = item.normalized()
-        return if (normalized.id == 0L) {
+        val normalized = item.normalized().copy(dirty = true)
+        val id = if (normalized.id == 0L) {
             dao.insert(ItemEntity.fromDomain(normalized.copy(createdAt = now, updatedAt = now)))
         } else {
             val previousImage = dao.getById(normalized.id)?.localImagePath
@@ -54,19 +59,25 @@ class ItemRepository(private val dao: ItemDao, private val images: ImageStore) {
             dao.update(ItemEntity.fromDomain(normalized.copy(updatedAt = now)))
             normalized.id
         }
+        changed()
+        return id
     }
 
+    /** Soft delete: the row stays as a tombstone until the deletion is pushed to the cloud. */
     suspend fun delete(item: CollectionItem) {
-        dao.delete(ItemEntity.fromDomain(item))
+        dao.softDelete(item.id, System.currentTimeMillis())
         item.localImagePath?.let { images.delete(it) }
+        changed()
     }
 
     suspend fun setCompletion(id: Long, percent: Int) {
         dao.updateCompletion(id, percent.coerceIn(0, 100), System.currentTimeMillis())
+        changed()
     }
 
     suspend fun setFavorite(id: Long, favorite: Boolean) {
         dao.updateFavorite(id, favorite, System.currentTimeMillis())
+        changed()
     }
 
     /** Applies a progress change through [CollectionItem.normalized] so category rules hold. */
@@ -80,6 +91,7 @@ class ItemRepository(private val dao: ItemDao, private val images: ImageStore) {
             backlog = next.backlog,
             now = System.currentTimeMillis(),
         )
+        changed()
     }
 
     suspend fun setStatus(item: CollectionItem, status: ProgressStatus) = updateProgress(item) {
