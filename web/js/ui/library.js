@@ -60,7 +60,7 @@ export async function renderLibrary(root, { services } = {}) {
 
   root.innerHTML = `<div class="view">
     ${appBar({
-      title: 'Minha biblioteca',
+      title: 'Biblioteca',
       badge: `v${VERSION}`,
       subtitle: items.length ? `${items.length} itens · ${completed} concluídos` : '',
       actions: `

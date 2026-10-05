@@ -69,7 +69,7 @@ export function appBar({ title, subtitle = '', back = null, actions = '', badge 
   return `
     <header class="appbar">
       ${back ? `<button class="icon-btn" data-nav="${esc(back)}" aria-label="Voltar">←</button>` : ''}
-      <h1>${esc(title)}${badge ? ` <span class="version-badge" title="Versão do app">${esc(badge)}</span>` : ''}${subtitle ? `<small>${esc(subtitle)}</small>` : ''}</h1>
+      <h1><span class="title-row"><span class="title-text">${esc(title)}</span>${badge ? `<span class="version-badge" title="Versão do app">${esc(badge)}</span>` : ''}</span>${subtitle ? `<small>${esc(subtitle)}</small>` : ''}</h1>
       ${actions}
     </header>`;
 }

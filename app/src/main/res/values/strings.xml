@@ -20,7 +20,7 @@
     <string name="action_unfavorite">Remover dos favoritos</string>
 
     <!-- Library -->
-    <string name="library_title">Minha biblioteca</string>
+    <string name="library_title">Biblioteca</string>
     <string name="library_search_hint">Buscar por título, plataforma ou autor</string>
     <string name="library_empty_title">Sua biblioteca está vazia</string>
     <string name="library_empty_body">Adicione jogos, livros, consoles e colecionáveis manualmente ou escaneando uma foto do item.</string>

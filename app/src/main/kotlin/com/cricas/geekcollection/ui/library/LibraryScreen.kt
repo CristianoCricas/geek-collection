@@ -110,7 +110,12 @@ fun LibraryScreen(
                     }
                     Column {
                         Row(verticalAlignment = Alignment.CenterVertically) {
-                            Text(stringResource(R.string.library_title))
+                            Text(
+                                stringResource(R.string.library_title),
+                                maxLines = 1,
+                                overflow = TextOverflow.Ellipsis,
+                                modifier = Modifier.weight(1f, fill = false),
+                            )
                             if (versionName.isNotEmpty()) {
                                 Spacer(Modifier.width(8.dp))
                                 Text(
